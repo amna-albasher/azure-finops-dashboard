@@ -1,896 +1,708 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Azure FinOps Dashboard</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Azure FinOps Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg-base: #080C14;
-    --bg-surface: #0F1520;
-    --bg-card: #141B27;
-    --bg-card-hover: #1A2335;
-    --bg-elevated: #1E2A3D;
-    --border: rgba(255,255,255,0.06);
-    --border-accent: rgba(59,130,246,0.3);
-    --text-primary: #F0F4FF;
-    --text-secondary: #8896B0;
-    --text-muted: #4A5568;
-    --blue: #3B82F6;
-    --blue-dim: rgba(59,130,246,0.12);
-    --blue-glow: rgba(59,130,246,0.25);
-    --green: #10B981;
-    --green-dim: rgba(16,185,129,0.12);
-    --amber: #F59E0B;
-    --amber-dim: rgba(245,158,11,0.12);
-    --red: #EF4444;
-    --red-dim: rgba(239,68,68,0.12);
-    --purple: #8B5CF6;
-    --mono: 'JetBrains Mono', monospace;
-    --sans: 'Inter', sans-serif;
-    --radius: 12px;
-    --radius-sm: 8px;
-  }
-
-  html { font-family: var(--sans); background: var(--bg-base); color: var(--text-primary); }
-  body { display: flex; min-height: 100vh; overflow-x: hidden; }
-
-  /* SIDEBAR */
-  .sidebar {
-    width: 240px;
-    min-height: 100vh;
-    background: var(--bg-surface);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: 0; left: 0;
-    z-index: 100;
-    padding: 0 0 24px;
-  }
-
-  .sidebar-logo {
-    padding: 24px 20px 20px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 8px;
-  }
-
-  .logo-mark {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .logo-icon {
-    width: 34px; height: 34px;
-    background: linear-gradient(135deg, #1D4ED8, #3B82F6);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px;
-  }
-
-  .logo-text { font-size: 15px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.3px; }
-  .logo-sub { font-size: 10px; color: var(--text-muted); font-family: var(--mono); letter-spacing: 0.5px; margin-top: 1px; }
-
-  .nav-section { padding: 8px 12px 4px; }
-  .nav-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; padding: 0 8px 8px; }
-
-  .nav-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 9px 12px;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    color: var(--text-secondary);
-    font-size: 13.5px;
-    font-weight: 500;
-    transition: all 0.15s;
-    margin-bottom: 2px;
-  }
-  .nav-item:hover { background: var(--bg-elevated); color: var(--text-primary); }
-  .nav-item.active { background: var(--blue-dim); color: var(--blue); border: 1px solid var(--border-accent); }
-  .nav-item .icon { font-size: 15px; width: 18px; text-align: center; }
-  .nav-badge { margin-left: auto; background: var(--red); color: white; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 20px; font-family: var(--mono); }
-
-  .sidebar-footer {
-    margin-top: auto;
-    padding: 16px 12px 0;
-    border-top: 1px solid var(--border);
-  }
-
-  .subscription-badge {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 10px 12px;
-  }
-  .sub-label { font-size: 10px; color: var(--text-muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.5px; }
-  .sub-name { font-size: 12px; color: var(--text-secondary); margin-top: 4px; font-weight: 500; }
-  .sub-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); margin-right: 6px; box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
-
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-
-  /* MAIN */
-  .main { margin-left: 240px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
-
-  .topbar {
-    height: 64px;
-    background: var(--bg-surface);
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center;
-    padding: 0 28px;
-    gap: 16px;
-    position: sticky; top: 0; z-index: 50;
-  }
-
-  .topbar-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
-  .topbar-period {
-    display: flex; align-items: center; gap: 8px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 6px 12px;
-    font-size: 12.5px;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .topbar-period:hover { border-color: var(--border-accent); color: var(--text-primary); }
-  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-
-  .last-updated {
-    font-size: 11px;
-    color: var(--text-muted);
-    font-family: var(--mono);
-    display: flex; align-items: center; gap: 6px;
-  }
-
-  .refresh-btn {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 7px 14px;
-    color: var(--text-secondary);
-    font-size: 12.5px;
-    font-family: var(--sans);
-    cursor: pointer;
-    transition: all 0.15s;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .refresh-btn:hover { background: var(--bg-elevated); color: var(--text-primary); border-color: var(--border-accent); }
-
-  /* CONTENT */
-  .content { padding: 28px; display: flex; flex-direction: column; gap: 24px; }
-
-  /* KPI CARDS */
-  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-
-  .kpi-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-    transition: all 0.2s;
-    position: relative;
-    overflow: hidden;
-  }
-  .kpi-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--accent-color, var(--blue));
-    opacity: 0.7;
-  }
-  .kpi-card:hover { border-color: rgba(255,255,255,0.1); background: var(--bg-card-hover); transform: translateY(-1px); }
-
-  .kpi-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-  .kpi-label { font-size: 11.5px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; }
-  .kpi-icon { font-size: 16px; opacity: 0.8; }
-  .kpi-value { font-size: 26px; font-weight: 700; color: var(--text-primary); font-family: var(--mono); letter-spacing: -1px; }
-  .kpi-meta { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
-  .kpi-change { font-size: 12px; font-weight: 600; font-family: var(--mono); }
-  .kpi-change.up { color: var(--red); }
-  .kpi-change.down { color: var(--green); }
-  .kpi-change.neutral { color: var(--text-muted); }
-  .kpi-change-label { font-size: 11px; color: var(--text-muted); }
-
-  /* BUDGET METER */
-  .budget-meter { margin-top: 12px; }
-  .meter-track { height: 4px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
-  .meter-fill { height: 100%; border-radius: 4px; transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1); width: 0; }
-
-  /* GRID LAYOUTS */
-  .two-col { display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px; }
-  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-
-  /* CHART CARDS */
-  .chart-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 22px;
-  }
-
-  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-  .card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
-  .card-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-  .card-badge { font-size: 11px; font-family: var(--mono); padding: 3px 8px; border-radius: 20px; font-weight: 500; }
-  .card-badge.blue { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(59,130,246,0.2); }
-  .card-badge.green { background: var(--green-dim); color: var(--green); border: 1px solid rgba(16,185,129,0.2); }
-  .card-badge.amber { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,158,11,0.2); }
-  .card-badge.red { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
-
-  .chart-wrapper { position: relative; }
-
-  /* RESOURCE GROUPS */
-  .rg-list { display: flex; flex-direction: column; gap: 12px; }
-  .rg-item { display: flex; flex-direction: column; gap: 6px; }
-  .rg-top { display: flex; align-items: center; justify-content: space-between; }
-  .rg-name { font-size: 12px; font-family: var(--mono); color: var(--text-secondary); }
-  .rg-env { font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 600; }
-  .rg-env.production { background: rgba(239,68,68,0.1); color: #F87171; }
-  .rg-env.staging { background: rgba(245,158,11,0.1); color: #FCD34D; }
-  .rg-env.development { background: rgba(59,130,246,0.1); color: #93C5FD; }
-  .rg-env.shared { background: rgba(139,92,246,0.1); color: #C4B5FD; }
-  .rg-right { display: flex; align-items: center; gap: 10px; }
-  .rg-amount { font-size: 13px; font-weight: 600; font-family: var(--mono); color: var(--text-primary); }
-  .rg-pct { font-size: 11px; color: var(--text-muted); font-family: var(--mono); }
-  .rg-bar { height: 3px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
-  .rg-bar-fill { height: 100%; border-radius: 3px; transition: width 1.4s cubic-bezier(0.4, 0, 0.2, 1); width: 0; }
-  .rg-bar-fill.healthy { background: linear-gradient(90deg, #10B981, #34D399); }
-  .rg-bar-fill.warning { background: linear-gradient(90deg, #F59E0B, #FCD34D); }
-  .rg-bar-fill.critical { background: linear-gradient(90deg, #EF4444, #F87171); }
-
-  /* TOP RESOURCES TABLE */
-  .table-wrapper { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; }
-  th { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; padding: 0 16px 12px; text-align: left; white-space: nowrap; }
-  td { padding: 12px 16px; border-top: 1px solid var(--border); font-size: 13px; }
-  tr:hover td { background: rgba(255,255,255,0.02); }
-  .resource-name { font-family: var(--mono); font-size: 12.5px; color: var(--text-primary); font-weight: 500; }
-  .resource-type { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
-  .rg-tag { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
-  .amount-cell { font-family: var(--mono); font-weight: 600; color: var(--text-primary); }
-  .amount-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-family: var(--mono); }
-  .trend-chip { display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; font-family: var(--mono); font-weight: 600; padding: 3px 8px; border-radius: 20px; }
-  .trend-chip.up { background: var(--red-dim); color: #F87171; }
-  .trend-chip.down { background: var(--green-dim); color: #34D399; }
-  .trend-chip.flat { background: rgba(255,255,255,0.04); color: var(--text-muted); }
-
-  /* WASTE ALERTS */
-  .waste-list { display: flex; flex-direction: column; gap: 10px; }
-  .waste-item {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 14px 16px;
-    display: flex; align-items: flex-start; gap: 12px;
-    transition: all 0.15s;
-  }
-  .waste-item:hover { border-color: rgba(255,255,255,0.1); }
-  .waste-severity { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
-  .waste-severity.high { background: var(--red); box-shadow: 0 0 6px var(--red); }
-  .waste-severity.medium { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
-  .waste-severity.low { background: var(--blue); box-shadow: 0 0 6px var(--blue); }
-  .waste-body { flex: 1; min-width: 0; }
-  .waste-resource { font-family: var(--mono); font-size: 12.5px; color: var(--text-primary); font-weight: 500; }
-  .waste-type { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
-  .waste-issue { font-size: 12.5px; color: var(--text-secondary); margin-top: 6px; }
-  .waste-rec { font-size: 11.5px; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 5px; }
-  .waste-rec::before { content: '→'; color: var(--green); font-size: 12px; }
-  .waste-right { text-align: right; flex-shrink: 0; }
-  .waste-amount { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--amber); }
-  .waste-days { font-size: 10.5px; color: var(--text-muted); font-family: var(--mono); margin-top: 4px; }
-  .severity-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 6px; }
-  .severity-label.high { color: var(--red); }
-  .severity-label.medium { color: var(--amber); }
-  .severity-label.low { color: var(--blue); }
-
-  /* SERVICE DONUT */
-  .service-legend { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
-  .legend-item { display: flex; align-items: center; justify-content: space-between; }
-  .legend-left { display: flex; align-items: center; gap: 8px; }
-  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .legend-name { font-size: 12.5px; color: var(--text-secondary); }
-  .legend-right { display: flex; align-items: center; gap: 10px; }
-  .legend-amount { font-family: var(--mono); font-size: 12px; color: var(--text-primary); font-weight: 500; }
-  .legend-pct { font-family: var(--mono); font-size: 11px; color: var(--text-muted); width: 36px; text-align: right; }
-
-  /* LOADING */
-  .loading-overlay {
-    position: fixed; inset: 0;
-    background: var(--bg-base);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    z-index: 999;
-    gap: 20px;
-    transition: opacity 0.5s, visibility 0.5s;
-  }
-  .loading-overlay.hidden { opacity: 0; visibility: hidden; }
-  .loading-logo { font-size: 32px; font-weight: 800; color: var(--text-primary); letter-spacing: -1px; }
-  .loading-logo span { color: var(--blue); }
-  .loading-bar-track { width: 200px; height: 2px; background: rgba(255,255,255,0.06); border-radius: 2px; }
-  .loading-bar-fill { height: 100%; background: var(--blue); border-radius: 2px; width: 0; transition: width 1.5s ease; }
-  .loading-text { font-size: 12px; color: var(--text-muted); font-family: var(--mono); }
-
-  /* SCROLLBAR */
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 3px; }
-
-  /* SKELETON */
-  .skeleton { background: linear-gradient(90deg, var(--bg-elevated) 25%, rgba(255,255,255,0.04) 50%, var(--bg-elevated) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; }
-  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080C14;--surface:#0F1520;--card:#141B27;--card-h:#1A2335;--el:#1E2A3D;
+  --b:rgba(255,255,255,.06);--ba:rgba(59,130,246,.3);
+  --t1:#F0F4FF;--t2:#8896B0;--t3:#4A5568;
+  --blue:#3B82F6;--bd:rgba(59,130,246,.12);
+  --green:#10B981;--gd:rgba(16,185,129,.12);
+  --amber:#F59E0B;--ad:rgba(245,158,11,.12);
+  --red:#EF4444;--rd:rgba(239,68,68,.12);
+  --purple:#8B5CF6;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
+  --r:12px;--rs:8px;
+}
+html{font-family:var(--sans);background:var(--bg);color:var(--t1)}
+body{display:flex;min-height:100vh;overflow-x:hidden}
+.sidebar{width:240px;min-height:100vh;background:var(--surface);border-right:1px solid var(--b);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100}
+.logo-area{padding:20px 16px;border-bottom:1px solid var(--b)}
+.logo-wrap{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#1D4ED8,#3B82F6);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-t{font-size:15px;font-weight:700;color:var(--t1);letter-spacing:-.3px}
+.logo-s{font-size:10px;color:var(--t3);font-family:var(--mono);letter-spacing:.5px;margin-top:1px}
+.nav-sec{padding:10px 10px 2px}
+.nav-lbl{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:1px;padding:0 8px 6px}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--rs);cursor:pointer;color:var(--t2);font-size:13px;font-weight:500;transition:all .15s;margin-bottom:1px;border:1px solid transparent;user-select:none}
+.ni:hover{background:var(--el);color:var(--t1)}
+.ni.active{background:var(--bd);color:var(--blue);border-color:var(--ba)}
+.ni svg{width:15px;height:15px;flex-shrink:0;opacity:.75}
+.ni.active svg{opacity:1}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;font-family:var(--mono)}
+.sb-footer{margin-top:auto;padding:14px 10px;border-top:1px solid var(--b)}
+.sub-card{background:var(--el);border:1px solid var(--b);border-radius:var(--rs);padding:10px 12px}
+.sub-lbl{font-size:10px;color:var(--t3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px}
+.sub-name{font-size:12px;color:var(--t2);margin-top:4px;font-weight:500;display:flex;align-items:center;gap:6px}
+.ldot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.main{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{height:60px;background:var(--surface);border-bottom:1px solid var(--b);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:50}
+.tb-title{font-size:15px;font-weight:600;color:var(--t1)}
+.tbr{margin-left:auto;display:flex;align-items:center;gap:10px}
+.tbb{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--b);border-radius:var(--rs);padding:6px 12px;font-size:12.5px;color:var(--t2);cursor:pointer;font-family:var(--sans);transition:all .15s;position:relative}
+.tbb:hover{border-color:var(--ba);color:var(--t1);background:var(--el)}
+.tbb svg{width:13px;height:13px;opacity:.7}
+.caret{width:10px!important;height:10px!important;opacity:.5}
+.lbadge{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t3);font-family:var(--mono)}
+.dd{position:absolute;top:calc(100% + 6px);left:0;min-width:170px;background:var(--el);border:1px solid var(--b);border-radius:var(--rs);padding:4px;z-index:200;display:none;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.dd.open{display:block}
+.ddi{padding:8px 12px;font-size:12.5px;color:var(--t2);border-radius:6px;cursor:pointer;transition:all .1s;white-space:nowrap}
+.ddi:hover{background:var(--card-h);color:var(--t1)}
+.ddi.sel{color:var(--blue)}
+.content{padding:24px;display:flex;flex-direction:column;gap:20px}
+.page{display:none}.page.active{display:flex;flex-direction:column;gap:20px}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px}
+.pt{font-size:18px;font-weight:700;color:var(--t1);letter-spacing:-.3px}
+.ps{font-size:12.5px;color:var(--t3);margin-top:3px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g21{display:grid;grid-template-columns:1.6fr 1fr;gap:16px}
+.card{background:var(--card);border:1px solid var(--b);border-radius:var(--r);padding:20px;transition:all .2s}
+.card:hover{border-color:rgba(255,255,255,.09)}
+.ch{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+.ct{font-size:13.5px;font-weight:600;color:var(--t1)}
+.cs{font-size:11.5px;color:var(--t3);margin-top:2px}
+.bdg{font-size:11px;font-family:var(--mono);padding:3px 9px;border-radius:20px;font-weight:500;white-space:nowrap}
+.b-blue{background:var(--bd);color:var(--blue);border:1px solid rgba(59,130,246,.2)}
+.b-green{background:var(--gd);color:var(--green);border:1px solid rgba(16,185,129,.2)}
+.b-amber{background:var(--ad);color:var(--amber);border:1px solid rgba(245,158,11,.2)}
+.b-red{background:var(--rd);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.b-purple{background:rgba(139,92,246,.12);color:var(--purple);border:1px solid rgba(139,92,246,.2)}
+.kpi{background:var(--card);border:1px solid var(--b);border-radius:var(--r);padding:20px;position:relative;overflow:hidden;transition:all .2s}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ac,var(--blue));opacity:.8}
+.kpi:hover{border-color:rgba(255,255,255,.1);background:var(--card-h);transform:translateY(-1px)}
+.kh{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.kl{font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.7px}
+.ki{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--el)}
+.ki svg{width:16px;height:16px}
+.kv{font-size:26px;font-weight:700;font-family:var(--mono);letter-spacing:-1px;color:var(--t1)}
+.kf{display:flex;align-items:center;gap:6px;margin-top:8px}
+.kc{font-size:12px;font-weight:600;font-family:var(--mono)}
+.kc.up{color:var(--red)}.kc.dn{color:var(--green)}.kc.neu{color:var(--t3)}
+.kcl{font-size:11px;color:var(--t3)}
+.mt{height:4px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden;margin-top:10px}
+.mf{height:100%;border-radius:4px;transition:width 1.2s cubic-bezier(.4,0,.2,1);width:0}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;padding:0 14px 12px;text-align:left;white-space:nowrap}
+td{padding:11px 14px;border-top:1px solid var(--b);font-size:13px;vertical-align:middle}
+tr:hover td{background:rgba(255,255,255,.015)}
+.mn{font-family:var(--mono)}
+.t1c{color:var(--t1)}.t2c{color:var(--t2)}.t3c{color:var(--t3)}
+.sub{font-size:11px;color:var(--t3);margin-top:2px}
+.tc{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-family:var(--mono);font-weight:600;padding:3px 8px;border-radius:20px}
+.tc.up{background:var(--rd);color:#F87171}.tc.dn{background:var(--gd);color:#34D399}.tc.flat{background:rgba(255,255,255,.04);color:var(--t3)}
+.sd{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sd.running,.sd.healthy,.sd.connected,.sd.active{background:var(--green);box-shadow:0 0 5px var(--green)}
+.sd.warning,.sd.stopping{background:var(--amber);box-shadow:0 0 5px var(--amber)}
+.sd.critical,.sd.stopped,.sd.error,.sd.unattached{background:var(--red);box-shadow:0 0 5px var(--red)}
+.sd.idle{background:var(--t3)}
+.sw{display:flex;align-items:center;gap:6px}
+.et{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600}
+.et.production{background:rgba(239,68,68,.1);color:#F87171}
+.et.staging{background:rgba(245,158,11,.1);color:#FCD34D}
+.et.development{background:rgba(59,130,246,.1);color:#93C5FD}
+.et.shared{background:rgba(139,92,246,.1);color:#C4B5FD}
+.wi{background:var(--el);border:1px solid var(--b);border-radius:var(--rs);padding:14px 16px;display:flex;align-items:flex-start;gap:12px;transition:all .15s;margin-bottom:10px}
+.wi:hover{border-color:rgba(255,255,255,.1)}
+.wsev{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.wsev.high{background:var(--red);box-shadow:0 0 6px var(--red)}
+.wsev.medium{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+.wsev.low{background:var(--blue);box-shadow:0 0 6px var(--blue)}
+.wb{flex:1;min-width:0}
+.wr2{font-family:var(--mono);font-size:12.5px;color:var(--t1);font-weight:500}
+.wt{font-size:11px;color:var(--t3);margin-top:1px}
+.wiss{font-size:12.5px;color:var(--t2);margin-top:6px}
+.wrec{font-size:11.5px;color:var(--t3);margin-top:4px}
+.wrec::before{content:'→ ';color:var(--green)}
+.wrt{text-align:right;flex-shrink:0}
+.wa{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--amber)}
+.wd{font-size:10.5px;color:var(--t3);font-family:var(--mono);margin-top:4px}
+.sl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:6px}
+.sl.high{color:var(--red)}.sl.medium{color:var(--amber)}.sl.low{color:var(--blue)}
+.rgi{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.rgt{display:flex;align-items:center;justify-content:space-between}
+.rgn{font-size:12px;font-family:var(--mono);color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px}
+.rgr{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.rga{font-size:13px;font-weight:600;font-family:var(--mono);color:var(--t1)}
+.rgp{font-size:11px;color:var(--t3);font-family:var(--mono)}
+.rbb{height:3px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden}
+.rbf{height:100%;border-radius:3px;transition:width 1.4s cubic-bezier(.4,0,.2,1);width:0}
+.rbf.healthy{background:linear-gradient(90deg,#10B981,#34D399)}
+.rbf.warning{background:linear-gradient(90deg,#F59E0B,#FCD34D)}
+.rbf.critical{background:linear-gradient(90deg,#EF4444,#F87171)}
+.legend{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.li2{display:flex;align-items:center;justify-content:space-between}
+.ll{display:flex;align-items:center;gap:8px}
+.ldot2{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ln{font-size:12.5px;color:var(--t2)}
+.lr{display:flex;align-items:center;gap:10px}
+.la{font-family:var(--mono);font-size:12px;color:var(--t1);font-weight:500}
+.lp{font-family:var(--mono);font-size:11px;color:var(--t3);width:36px;text-align:right}
+.ri{background:var(--el);border:1px solid var(--b);border-radius:var(--rs);padding:16px;margin-bottom:10px;transition:all .15s}
+.ri:hover{border-color:rgba(255,255,255,.1)}
+.rt{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.rtitle{font-size:13.5px;font-weight:600;color:var(--t1)}
+.rdesc{font-size:12.5px;color:var(--t2);margin-top:6px;line-height:1.5}
+.rmeta{display:flex;align-items:center;gap:10px;margin-top:10px}
+.rsav{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--green)}
+.reff{font-size:11px;color:var(--t3)}
+.rbtn{background:var(--bd);border:1px solid var(--ba);border-radius:6px;padding:6px 14px;font-size:12px;color:var(--blue);cursor:pointer;font-family:var(--sans);font-weight:500;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.rbtn:hover{background:rgba(59,130,246,.2)}
+.bc{background:var(--el);border:1px solid var(--b);border-radius:var(--rs);padding:18px;margin-bottom:12px}
+.bt{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.bn{font-size:13.5px;font-weight:600;color:var(--t1)}
+.bam{display:flex;align-items:center;gap:6px;font-family:var(--mono)}
+.bsp{font-size:16px;font-weight:700;color:var(--t1)}
+.bto{font-size:13px;color:var(--t3)}
+.bbtrack{height:8px;background:rgba(255,255,255,.05);border-radius:8px;overflow:hidden;margin-bottom:8px}
+.bbfill{height:100%;border-radius:8px;transition:width 1.2s cubic-bezier(.4,0,.2,1);width:0}
+.bfoot{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--t3);font-family:var(--mono)}
+.ss{margin-bottom:28px}
+.stitle{font-size:14px;font-weight:600;color:var(--t1);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--b)}
+.srow{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--b)}
+.srow:last-child{border-bottom:none}
+.slbl{font-size:13.5px;color:var(--t1);font-weight:500}
+.sdesc{font-size:12px;color:var(--t3);margin-top:2px}
+.sctrl select,.sctrl input{background:var(--el);border:1px solid var(--b);border-radius:6px;padding:7px 12px;color:var(--t1);font-size:12.5px;font-family:var(--sans);outline:none;min-width:160px}
+.toggle{width:40px;height:22px;background:var(--el);border-radius:22px;cursor:pointer;position:relative;transition:all .2s;border:1px solid var(--b);flex-shrink:0}
+.toggle.on{background:var(--blue);border-color:var(--blue)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:all .2s}
+.toggle.on::after{left:20px}
+.rstat{background:var(--el);border:1px solid var(--b);border-radius:var(--rs);padding:16px;text-align:center}
+.rsval{font-size:22px;font-weight:700;font-family:var(--mono);color:var(--t1)}
+.rslbl{font-size:11px;color:var(--t3);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+.rgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:20px;transition:opacity .5s,visibility .5s}
+.loading-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.llogo{font-size:28px;font-weight:800;color:var(--t1);letter-spacing:-1px}
+.llogo span{color:var(--blue)}
+.ltrack{width:200px;height:2px;background:rgba(255,255,255,.06);border-radius:2px}
+.lfill{height:100%;background:var(--blue);border-radius:2px;width:0;transition:width 1.8s ease}
+.ltxt{font-size:12px;color:var(--t3);font-family:var(--mono)}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--el);border-radius:3px}
 </style>
 </head>
 <body>
+<div class="loading-overlay" id="lo"><div class="llogo">Azure <span>FinOps</span> Hub</div><div class="ltrack"><div class="lfill" id="lb"></div></div><div class="ltxt" id="lt">Connecting to Azure Cost Management...</div></div>
 
-<!-- LOADING -->
-<div class="loading-overlay" id="loadingOverlay">
-  <div class="loading-logo">Azure <span>FinOps</span></div>
-  <div class="loading-bar-track"><div class="loading-bar-fill" id="loadingBar"></div></div>
-  <div class="loading-text" id="loadingText">Connecting to Azure Cost Management...</div>
-</div>
-
-<!-- SIDEBAR -->
 <aside class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-mark">
-      <div class="logo-icon">☁️</div>
-      <div>
-        <div class="logo-text">FinOps Hub</div>
-        <div class="logo-sub">AZURE COST INTELLIGENCE</div>
-      </div>
-    </div>
+  <div class="logo-area"><div class="logo-wrap"><div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="18" height="18"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><div><div class="logo-t">FinOps Hub</div><div class="logo-s">AZURE COST INTELLIGENCE</div></div></div></div>
+  <div class="nav-sec"><div class="nav-lbl">Overview</div>
+    <div class="ni active" data-page="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</div>
+    <div class="ni" data-page="cost-analysis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Cost Analysis</div>
+    <div class="ni" data-page="trends"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Trends</div>
   </div>
-
-  <div class="nav-section">
-    <div class="nav-label">Overview</div>
-    <div class="nav-item active"><span class="icon">◈</span> Dashboard</div>
-    <div class="nav-item"><span class="icon">📊</span> Cost Analysis</div>
-    <div class="nav-item"><span class="icon">📈</span> Trends</div>
+  <div class="nav-sec"><div class="nav-lbl">Resources</div>
+    <div class="ni" data-page="resource-groups"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>Resource Groups</div>
+    <div class="ni" data-page="compute"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>Compute</div>
+    <div class="ni" data-page="storage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>Storage</div>
+    <div class="ni" data-page="networking"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>Networking</div>
   </div>
-
-  <div class="nav-section">
-    <div class="nav-label">Resources</div>
-    <div class="nav-item"><span class="icon">🗂</span> Resource Groups</div>
-    <div class="nav-item"><span class="icon">💻</span> Compute</div>
-    <div class="nav-item"><span class="icon">🔒</span> Storage</div>
-    <div class="nav-item"><span class="icon">🌐</span> Networking</div>
+  <div class="nav-sec"><div class="nav-lbl">Optimization</div>
+    <div class="ni" data-page="waste-alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Waste Alerts<span class="nav-badge">5</span></div>
+    <div class="ni" data-page="recommendations"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Recommendations</div>
+    <div class="ni" data-page="budgets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6"/></svg>Budgets</div>
   </div>
-
-  <div class="nav-section">
-    <div class="nav-label">Optimization</div>
-    <div class="nav-item">
-      <span class="icon">⚠️</span> Waste Alerts
-      <span class="nav-badge" id="wasteBadge">5</span>
-    </div>
-    <div class="nav-item"><span class="icon">💡</span> Recommendations</div>
-    <div class="nav-item"><span class="icon">🎯</span> Budgets</div>
+  <div class="nav-sec"><div class="nav-lbl">Reports</div>
+    <div class="ni" data-page="monthly-report"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Monthly Report</div>
+    <div class="ni" data-page="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Settings</div>
   </div>
-
-  <div class="nav-section">
-    <div class="nav-label">Reports</div>
-    <div class="nav-item"><span class="icon">📋</span> Monthly Report</div>
-    <div class="nav-item"><span class="icon">⚙️</span> Settings</div>
-  </div>
-
-  <div class="sidebar-footer">
-    <div class="subscription-badge">
-      <div class="sub-label">Active Subscription</div>
-      <div class="sub-name"><span class="sub-dot"></span>Webology-Production</div>
-    </div>
-  </div>
+  <div class="sb-footer"><div class="sub-card"><div class="sub-lbl">Active Subscription</div><div class="sub-name"><span class="ldot"></span>Contoso-Production</div></div></div>
 </aside>
 
-<!-- MAIN -->
 <main class="main">
   <div class="topbar">
-    <div>
-      <div class="topbar-title">Cost Overview</div>
-    </div>
-    <div class="topbar-period">📅 July 2026 &nbsp;▾</div>
-    <div class="topbar-period">All Subscriptions &nbsp;▾</div>
-    <div class="topbar-right">
-      <div class="last-updated" id="lastUpdated">
-        <span class="sub-dot"></span> Live
+    <div class="tb-title" id="tbt">Cost Overview</div>
+    <div class="tbr">
+      <div class="tbb" onclick="toggleDD('pDD')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span id="pLabel">July 2026</span>
+        <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        <div class="dd" id="pDD">
+          <div class="ddi sel" onclick="setP('July 2026')">July 2026</div>
+          <div class="ddi" onclick="setP('June 2026')">June 2026</div>
+          <div class="ddi" onclick="setP('May 2026')">May 2026</div>
+          <div class="ddi" onclick="setP('Q2 2026')">Q2 2026</div>
+          <div class="ddi" onclick="setP('YTD 2026')">YTD 2026</div>
+        </div>
       </div>
-      <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+      <div class="tbb" onclick="toggleDD('sDD')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+        <span id="sLabel">All Subscriptions</span>
+        <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        <div class="dd" id="sDD">
+          <div class="ddi sel" onclick="setS('All Subscriptions')">All Subscriptions</div>
+          <div class="ddi" onclick="setS('Contoso-Production')">Contoso-Production</div>
+          <div class="ddi" onclick="setS('Contoso-Dev')">Contoso-Dev</div>
+        </div>
+      </div>
+      <div class="lbadge"><span class="ldot"></span><span id="lu">Live</span></div>
+      <button class="tbb" onclick="doRefresh()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        Refresh
+      </button>
     </div>
   </div>
 
   <div class="content">
 
-    <!-- KPI CARDS -->
-    <div class="kpi-grid" id="kpiGrid">
-      <div class="kpi-card" style="--accent-color: #3B82F6">
-        <div class="kpi-header">
-          <div class="kpi-label">Month-to-Date Spend</div>
-          <div class="kpi-icon">💰</div>
-        </div>
-        <div class="kpi-value" id="kpi-total">—</div>
-        <div class="kpi-meta">
-          <span class="kpi-change up" id="kpi-mom">—</span>
-          <span class="kpi-change-label">vs last month</span>
-        </div>
-      </div>
-
-      <div class="kpi-card" style="--accent-color: #F59E0B">
-        <div class="kpi-header">
-          <div class="kpi-label">Budget Utilization</div>
-          <div class="kpi-icon">🎯</div>
-        </div>
-        <div class="kpi-value" id="kpi-budget-pct">—</div>
-        <div class="budget-meter">
-          <div class="meter-track">
-            <div class="meter-fill" id="budgetMeter" style="background: linear-gradient(90deg, #3B82F6, #F59E0B);"></div>
-          </div>
-        </div>
-        <div class="kpi-meta" style="margin-top: 8px;">
-          <span class="kpi-change neutral" id="kpi-budget-remaining">—</span>
-          <span class="kpi-change-label">remaining</span>
-        </div>
-      </div>
-
-      <div class="kpi-card" style="--accent-color: #10B981">
-        <div class="kpi-header">
-          <div class="kpi-label">Month-End Forecast</div>
-          <div class="kpi-icon">📈</div>
-        </div>
-        <div class="kpi-value" id="kpi-forecast">—</div>
-        <div class="kpi-meta">
-          <span class="kpi-change-label">Daily average: </span>
-          <span class="kpi-change neutral" id="kpi-daily">—</span>
-        </div>
-      </div>
-
-      <div class="kpi-card" style="--accent-color: #EF4444">
-        <div class="kpi-header">
-          <div class="kpi-label">Waste Identified</div>
-          <div class="kpi-icon">⚡</div>
-        </div>
-        <div class="kpi-value" id="kpi-waste">—</div>
-        <div class="kpi-meta">
-          <span class="kpi-change up" id="kpi-waste-count">—</span>
-          <span class="kpi-change-label">active alerts</span>
-        </div>
-      </div>
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="g4">
+      <div class="kpi" style="--ac:var(--blue)"><div class="kh"><div class="kl">Month-to-Date Spend</div><div class="ki"><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6"/></svg></div></div><div class="kv">$40,992</div><div class="kf"><span class="kc up">▲ 8.3%</span><span class="kcl">vs last month</span></div></div>
+      <div class="kpi" style="--ac:var(--amber)"><div class="kh"><div class="kl">Budget Utilization</div><div class="ki"><svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div></div><div class="kv">91.1%</div><div class="mt"><div class="mf" id="bm" style="background:linear-gradient(90deg,var(--blue),var(--amber))"></div></div><div class="kf" style="margin-top:8px"><span class="kc neu">$4,008</span><span class="kcl">remaining of $45,000</span></div></div>
+      <div class="kpi" style="--ac:var(--green)"><div class="kh"><div class="kl">Month-End Forecast</div><div class="ki"><svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div></div><div class="kv">$43,200</div><div class="kf"><span class="kcl">Daily avg:</span><span class="kc neu">$1,863/day</span></div></div>
+      <div class="kpi" style="--ac:var(--red)"><div class="kh"><div class="kl">Waste Identified</div><div class="ki"><svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div></div><div class="kv">$1,537</div><div class="kf"><span class="kc up">5</span><span class="kcl">active alerts</span></div></div>
     </div>
-
-    <!-- SPEND CHART + RESOURCE GROUPS -->
-    <div class="two-col">
-      <div class="chart-card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Daily Spend</div>
-            <div class="card-subtitle">Last 30 days + 7-day forecast</div>
-          </div>
-          <span class="card-badge blue">USD</span>
-        </div>
-        <div class="chart-wrapper" style="height: 240px;">
-          <canvas id="spendChart"></canvas>
-        </div>
-      </div>
-
-      <div class="chart-card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Resource Groups</div>
-            <div class="card-subtitle">Budget utilization by environment</div>
-          </div>
-        </div>
-        <div class="rg-list" id="rgList">
-          <div class="skeleton" style="height:48px;border-radius:8px;"></div>
-          <div class="skeleton" style="height:48px;border-radius:8px;"></div>
-          <div class="skeleton" style="height:48px;border-radius:8px;"></div>
-        </div>
-      </div>
+    <div class="g21">
+      <div class="card"><div class="ch"><div><div class="ct">Daily Spend</div><div class="cs">Last 30 days + 7-day forecast</div></div><span class="bdg b-blue">USD</span></div><div style="height:240px;position:relative"><canvas id="sc"></canvas></div></div>
+      <div class="card"><div class="ch"><div><div class="ct">Resource Groups</div><div class="cs">Budget by environment</div></div></div><div id="rgd"></div></div>
     </div>
-
-    <!-- TOP RESOURCES TABLE -->
-    <div class="chart-card">
-      <div class="card-header">
-        <div>
-          <div class="card-title">Top Resources by Cost</div>
-          <div class="card-subtitle">Highest spend resources this month</div>
-        </div>
-        <span class="card-badge blue" id="resourceCount">—</span>
-      </div>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Resource</th>
-              <th>Resource Group</th>
-              <th>Daily Cost</th>
-              <th>Monthly Cost</th>
-              <th>Trend</th>
-            </tr>
-          </thead>
-          <tbody id="resourceTable">
-            <tr><td colspan="5"><div class="skeleton" style="height:20px;"></div></td></tr>
-          </tbody>
-        </table>
-      </div>
+    <div class="card"><div class="ch"><div><div class="ct">Top Resources by Cost</div><div class="cs">Highest spend this month</div></div><span class="bdg b-blue">8 resources</span></div><div class="tw"><table><thead><tr><th>Resource</th><th>Resource Group</th><th>Daily</th><th>Monthly</th><th>Trend</th></tr></thead><tbody id="rtt"></tbody></table></div></div>
+    <div class="g21">
+      <div class="card"><div class="ch"><div><div class="ct">Waste Alerts</div><div class="cs">Resources flagged for optimization</div></div><span class="bdg b-red" id="wtb">$1,537 waste</span></div><div id="wld"></div></div>
+      <div class="card"><div class="ch"><div><div class="ct">Spend by Service</div><div class="cs">Cost distribution this month</div></div></div><div style="height:180px;position:relative"><canvas id="dc"></canvas></div><div class="legend" id="sl2"></div></div>
     </div>
-
-    <!-- SERVICE BREAKDOWN + WASTE ALERTS -->
-    <div class="two-col">
-      <div class="chart-card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Waste Alerts</div>
-            <div class="card-subtitle">Resources identified for optimization</div>
-          </div>
-          <span class="card-badge red" id="wasteTotal">—</span>
-        </div>
-        <div class="waste-list" id="wasteList">
-          <div class="skeleton" style="height:80px;border-radius:8px;"></div>
-          <div class="skeleton" style="height:80px;border-radius:8px;"></div>
-        </div>
-      </div>
-
-      <div class="chart-card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Spend by Service</div>
-            <div class="card-subtitle">Cost distribution across Azure services</div>
-          </div>
-        </div>
-        <div style="height:180px; position:relative;">
-          <canvas id="donutChart"></canvas>
-        </div>
-        <div class="service-legend" id="serviceLegend"></div>
-      </div>
-    </div>
-
   </div>
+
+  <!-- COST ANALYSIS -->
+  <div class="page" id="page-cost-analysis">
+    <div class="ph"><div><div class="pt">Cost Analysis</div><div class="ps">Detailed breakdown by dimension and tag</div></div></div>
+    <div class="g4">
+      <div class="kpi" style="--ac:var(--blue)"><div class="kh"><div class="kl">Total Spend</div></div><div class="kv">$40,992</div><div class="kf"><span class="kc up">▲ 8.3%</span><span class="kcl">MoM</span></div></div>
+      <div class="kpi" style="--ac:var(--green)"><div class="kh"><div class="kl">Largest Category</div></div><div class="kv">Compute</div><div class="kf"><span class="kc neu">$16,840</span><span class="kcl">41.2% of total</span></div></div>
+      <div class="kpi" style="--ac:var(--amber)"><div class="kh"><div class="kl">Fastest Growing</div></div><div class="kv">Databricks</div><div class="kf"><span class="kc up">▲ 15.4%</span><span class="kcl">vs last month</span></div></div>
+      <div class="kpi" style="--ac:var(--purple)"><div class="kh"><div class="kl">Avg Cost/Resource</div></div><div class="kv">$313</div><div class="kf"><span class="kcl">across 131 resources</span></div></div>
+    </div>
+    <div class="g2">
+      <div class="card"><div class="ch"><div><div class="ct">Spend by Service</div><div class="cs">This month</div></div></div><div style="height:280px;position:relative"><canvas id="cab"></canvas></div></div>
+      <div class="card"><div class="ch"><div><div class="ct">By Environment</div><div class="cs">Production vs non-production</div></div></div><div style="height:280px;position:relative"><canvas id="epc"></canvas></div></div>
+    </div>
+    <div class="card"><div class="ch"><div><div class="ct">Cost by Project Tag</div><div class="cs">Spend allocation</div></div><span class="bdg b-blue">7 tags</span></div>
+      <div class="tw"><table><thead><tr><th>Tag</th><th>Resources</th><th>Monthly Spend</th><th>% of Total</th><th>vs Last Month</th></tr></thead><tbody>
+        <tr><td><span class="mn t1c">project:ecommerce-platform</span></td><td class="t2c">32</td><td class="mn t1c">$12,840</td><td class="t2c">31.3%</td><td><span class="tc up">▲ 6.2%</span></td></tr>
+        <tr><td><span class="mn t1c">project:data-analytics</span></td><td class="t2c">18</td><td class="mn t1c">$9,210</td><td class="t2c">22.5%</td><td><span class="tc up">▲ 18.4%</span></td></tr>
+        <tr><td><span class="mn t1c">project:api-gateway</span></td><td class="t2c">12</td><td class="mn t1c">$6,430</td><td class="t2c">15.7%</td><td><span class="tc dn">▼ 2.1%</span></td></tr>
+        <tr><td><span class="mn t1c">project:shared-infra</span></td><td class="t2c">29</td><td class="mn t1c">$5,890</td><td class="t2c">14.4%</td><td><span class="tc flat">● flat</span></td></tr>
+        <tr><td><span class="mn t1c">project:devops-tooling</span></td><td class="t2c">21</td><td class="mn t1c">$4,210</td><td class="t2c">10.3%</td><td><span class="tc up">▲ 3.8%</span></td></tr>
+        <tr><td><span class="mn t1c">project:ai-services</span></td><td class="t2c">9</td><td class="mn t1c">$2,412</td><td class="t2c">5.9%</td><td><span class="tc up">▲ 41.2%</span></td></tr>
+      </tbody></table></div>
+    </div>
+  </div>
+
+  <!-- TRENDS -->
+  <div class="page" id="page-trends">
+    <div class="ph"><div><div class="pt">Trends</div><div class="ps">Month-over-month analysis and cost forecasting</div></div></div>
+    <div class="g3">
+      <div class="kpi" style="--ac:var(--blue)"><div class="kh"><div class="kl">6-Month Total</div></div><div class="kv">$228K</div><div class="kf"><span class="kc up">▲ 12.4%</span><span class="kcl">YoY</span></div></div>
+      <div class="kpi" style="--ac:var(--green)"><div class="kh"><div class="kl">Avg Monthly</div></div><div class="kv">$38,040</div><div class="kf"><span class="kcl">rolling 6 months</span></div></div>
+      <div class="kpi" style="--ac:var(--amber)"><div class="kh"><div class="kl">Peak Month</div></div><div class="kv">Jul 2026</div><div class="kf"><span class="kc up">$43,200</span><span class="kcl">forecasted</span></div></div>
+    </div>
+    <div class="card"><div class="ch"><div><div class="ct">Monthly Spend — 6 Month View</div><div class="cs">Actual vs forecast with budget line</div></div><span class="bdg b-blue">Jan–Jul 2026</span></div><div style="height:280px;position:relative"><canvas id="trc"></canvas></div></div>
+    <div class="g2">
+      <div class="card"><div class="ch"><div><div class="ct">Top Growing Services</div><div class="cs">Highest MoM cost increase</div></div></div>
+        <div class="tw"><table><thead><tr><th>Service</th><th>Last Month</th><th>This Month</th><th>Change</th></tr></thead><tbody>
+          <tr><td class="t1c">Azure Databricks</td><td class="mn t2c">$7,360</td><td class="mn t1c">$8,920</td><td><span class="tc up">▲ 21.2%</span></td></tr>
+          <tr><td class="t1c">AI Services</td><td class="mn t2c">$1,640</td><td class="mn t1c">$2,320</td><td><span class="tc up">▲ 41.5%</span></td></tr>
+          <tr><td class="t1c">AKS Compute</td><td class="mn t2c">$5,190</td><td class="mn t1c">$5,622</td><td><span class="tc up">▲ 8.3%</span></td></tr>
+          <tr><td class="t1c">Storage</td><td class="mn t2c">$5,020</td><td class="mn t1c">$5,430</td><td><span class="tc up">▲ 8.2%</span></td></tr>
+        </tbody></table></div>
+      </div>
+      <div class="card"><div class="ch"><div><div class="ct">Efficiency Metrics</div><div class="cs">Utilization and waste ratios</div></div></div>
+        <div class="tw"><table><thead><tr><th>Metric</th><th>Value</th><th>Status</th></tr></thead><tbody>
+          <tr><td class="t1c">CPU Utilization (avg)</td><td class="mn t1c">34%</td><td><span class="tc up">Low</span></td></tr>
+          <tr><td class="t1c">Memory Utilization</td><td class="mn t1c">61%</td><td><span class="tc dn">Good</span></td></tr>
+          <tr><td class="t1c">Storage Utilization</td><td class="mn t1c">72%</td><td><span class="tc dn">Good</span></td></tr>
+          <tr><td class="t1c">Waste Ratio</td><td class="mn t1c">3.7%</td><td><span class="tc up">High</span></td></tr>
+          <tr><td class="t1c">Reserved vs On-Demand</td><td class="mn t1c">42%</td><td><span class="tc flat">Moderate</span></td></tr>
+        </tbody></table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESOURCE GROUPS -->
+  <div class="page" id="page-resource-groups">
+    <div class="ph"><div><div class="pt">Resource Groups</div><div class="ps">Budget utilization across all resource groups</div></div></div>
+    <div class="card"><div class="ch"><div><div class="ct">All Resource Groups</div><div class="cs">5 resource groups · 1 subscription</div></div></div>
+      <div class="tw"><table><thead><tr><th>Name</th><th>Environment</th><th>Resources</th><th>Spend</th><th>Budget</th><th>Utilization</th><th>Status</th></tr></thead><tbody>
+        <tr><td><span class="mn t1c">rg-production-uae-north</span></td><td><span class="et production">production</span></td><td class="t2c">47</td><td class="mn t1c">$18,421</td><td class="mn t2c">$20,000</td><td><div style="display:flex;align-items:center;gap:8px"><div style="width:80px;height:4px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden"><div style="width:92%;height:100%;background:linear-gradient(90deg,#F59E0B,#FCD34D)"></div></div><span class="mn t2c" style="font-size:11px">92.1%</span></div></td><td><div class="sw"><span class="sd warning"></span><span class="t2c" style="font-size:12px">Warning</span></div></td></tr>
+        <tr><td><span class="mn t1c">rg-data-analytics</span></td><td><span class="et production">production</span></td><td class="t2c">12</td><td class="mn t1c">$7,640</td><td class="mn t2c">$7,000</td><td><div style="display:flex;align-items:center;gap:8px"><div style="width:80px;height:4px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden"><div style="width:100%;height:100%;background:linear-gradient(90deg,#EF4444,#F87171)"></div></div><span class="mn" style="font-size:11px;color:var(--red)">109.1%</span></div></td><td><div class="sw"><span class="sd critical"></span><span class="t2c" style="font-size:12px">Over Budget</span></div></td></tr>
+        <tr><td><span class="mn t1c">rg-shared-services</span></td><td><span class="et shared">shared</span></td><td class="t2c">18</td><td class="mn t1c">$4,890</td><td class="mn t2c">$5,500</td><td><div style="display:flex;align-items:center;gap:8px"><div style="width:80px;height:4px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden"><div style="width:88%;height:100%;background:linear-gradient(90deg,#F59E0B,#FCD34D)"></div></div><span class="mn t2c" style="font-size:11px">88.9%</span></div></td><td><div class="sw"><span class="sd warning"></span><span class="t2c" style="font-size:12px">Warning</span></div></td></tr>
+        <tr><td><span class="mn t1c">rg-staging-uae-north</span></td><td><span class="et staging">staging</span></td><td class="t2c">23</td><td class="mn t1c">$6,830</td><td class="mn t2c">$8,000</td><td><div style="display:flex;align-items:center;gap:8px"><div style="width:80px;height:4px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden"><div style="width:85%;height:100%;background:linear-gradient(90deg,#F59E0B,#FCD34D)"></div></div><span class="mn t2c" style="font-size:11px">85.4%</span></div></td><td><div class="sw"><span class="sd warning"></span><span class="t2c" style="font-size:12px">Warning</span></div></td></tr>
+        <tr><td><span class="mn t1c">rg-development-uae-north</span></td><td><span class="et development">development</span></td><td class="t2c">31</td><td class="mn t1c">$3,211</td><td class="mn t2c">$5,000</td><td><div style="display:flex;align-items:center;gap:8px"><div style="width:80px;height:4px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden"><div style="width:64%;height:100%;background:linear-gradient(90deg,#10B981,#34D399)"></div></div><span class="mn t2c" style="font-size:11px">64.2%</span></div></td><td><div class="sw"><span class="sd healthy"></span><span class="t2c" style="font-size:12px">Healthy</span></div></td></tr>
+      </tbody></table></div>
+    </div>
+  </div>
+
+  <!-- COMPUTE -->
+  <div class="page" id="page-compute">
+    <div class="ph"><div><div class="pt">Compute</div><div class="ps">Virtual machines, AKS clusters, and container instances</div></div></div>
+    <div class="g3">
+      <div class="kpi" style="--ac:var(--blue)"><div class="kh"><div class="kl">Total Compute Cost</div></div><div class="kv">$16,840</div><div class="kf"><span class="kc up">▲ 6.1%</span><span class="kcl">vs last month</span></div></div>
+      <div class="kpi" style="--ac:var(--green)"><div class="kh"><div class="kl">Running Instances</div></div><div class="kv">23</div><div class="kf"><span class="kc neu">3</span><span class="kcl">stopped / idle</span></div></div>
+      <div class="kpi" style="--ac:var(--amber)"><div class="kh"><div class="kl">Avg CPU Utilization</div></div><div class="kv">34%</div><div class="kf"><span class="kcl">consider rightsizing underused VMs</span></div></div>
+    </div>
+    <div class="card"><div class="ch"><div><div class="ct">Virtual Machines</div><div class="cs">All VMs across environments</div></div><span class="bdg b-blue">12 VMs</span></div>
+      <div class="tw"><table><thead><tr><th>Name</th><th>Size</th><th>Resource Group</th><th>CPU</th><th>Status</th><th>Monthly Cost</th></tr></thead><tbody>
+        <tr><td><span class="mn t1c">vm-sql-primary-prod</span></td><td class="t2c">D8s v3</td><td><span class="mn t3c">rg-production-uae-north</span></td><td class="mn t1c">78%</td><td><div class="sw"><span class="sd running"></span><span class="t2c" style="font-size:12px">Running</span></div></td><td class="mn t1c">$2,946</td></tr>
+        <tr><td><span class="mn t1c">vm-app-primary-prod</span></td><td class="t2c">D4s v3</td><td><span class="mn t3c">rg-production-uae-north</span></td><td class="mn t1c">62%</td><td><div class="sw"><span class="sd running"></span><span class="t2c" style="font-size:12px">Running</span></div></td><td class="mn t1c">$1,473</td></tr>
+        <tr><td><span class="mn t1c">vm-app-secondary-prod</span></td><td class="t2c">D4s v3</td><td><span class="mn t3c">rg-production-uae-north</span></td><td class="mn t1c">58%</td><td><div class="sw"><span class="sd running"></span><span class="t2c" style="font-size:12px">Running</span></div></td><td class="mn t1c">$1,473</td></tr>
+        <tr><td><span class="mn t1c">vm-jumpbox-prod</span></td><td class="t2c">B2s</td><td><span class="mn t3c">rg-production-uae-north</span></td><td class="mn t1c">4%</td><td><div class="sw"><span class="sd running"></span><span class="t2c" style="font-size:12px">Running</span></div></td><td class="mn t1c">$142</td></tr>
+        <tr><td><span class="mn t1c">vm-dev-test-07</span></td><td class="t2c">D4s v3</td><td><span class="mn t3c">rg-development-uae-north</span></td><td><span class="mn" style="color:var(--red)">2%</span></td><td><div class="sw"><span class="sd idle"></span><span class="t2c" style="font-size:12px">Idle</span></div></td><td class="mn" style="color:var(--amber)">$413</td></tr>
+        <tr><td><span class="mn t1c">vm-staging-worker-01</span></td><td class="t2c">D2s v3</td><td><span class="mn t3c">rg-staging-uae-north</span></td><td class="mn t1c">41%</td><td><div class="sw"><span class="sd running"></span><span class="t2c" style="font-size:12px">Running</span></div></td><td class="mn t1c">$631</td></tr>
+      </tbody></table></div>
+    </div>
+    <div class="card"><div class="ch"><div><div class="ct">AKS Clusters</div><div class="cs">Kubernetes cluster cost and utilization</div></div><span class="bdg b-blue">2 clusters</span></div>
+      <div class="tw"><table><thead><tr><th>Cluster</th><th>Node Pools</th><th>Nodes</th><th>Resource Group</th><th>Status</th><th>Monthly Cost</th></tr></thead><tbody>
+        <tr><td><span class="mn t1c">aks-prod-cluster-01</span></td><td class="t2c">3 pools</td><td class="t2c">8 nodes</td><td><span class="mn t3c">rg-production-uae-north</span></td><td><div class="sw"><span class="sd running"></span><span class="t2c" style="font-size:12px">Running</span></div></td><td class="mn t1c">$5,622</td></tr>
+        <tr><td><span class="mn t1c">aks-dev-cluster-01</span></td><td class="t2c">2 pools</td><td class="t2c">3 nodes</td><td><span class="mn t3c">rg-development-uae-north</span></td><td><div class="sw"><span class="sd warning"></span><span class="t2c" style="font-size:12px">GPU Idle</span></div></td><td class="mn" style="color:var(--amber)">$1,240</td></tr>
+      </tbody></table></div>
+    </div>
+  </div>
+
+  <!-- STORAGE -->
+  <div class="page" id="page-storage">
+    <div class="ph"><div><div class="pt">Storage</div><div class="ps">Storage accounts, managed disks, and snapshots</div></div></div>
+    <div class="g3">
+      <div class="kpi" style="--ac:var(--blue)"><div class="kh"><div class="kl">Total Storage Cost</div></div><div class="kv">$5,430</div><div class="kf"><span class="kc up">▲ 8.2%</span><span class="kcl">vs last month</span></div></div>
+      <div class="kpi" style="--ac:var(--green)"><div class="kh"><div class="kl">Total Capacity</div></div><div class="kv">42 TB</div><div class="kf"><span class="kc neu">72%</span><span class="kcl">utilized</span></div></div>
+      <div class="kpi" style="--ac:var(--red)"><div class="kh"><div class="kl">Orphaned Disks</div></div><div class="kv">1</div><div class="kf"><span class="kc up">$138</span><span class="kcl">monthly waste</span></div></div>
+    </div>
+    <div class="card"><div class="ch"><div><div class="ct">Storage Accounts</div></div></div>
+      <div class="tw"><table><thead><tr><th>Name</th><th>Type</th><th>Replication</th><th>Used</th><th>Resource Group</th><th>Monthly Cost</th></tr></thead><tbody>
+        <tr><td><span class="mn t1c">stproddata001</span></td><td class="t2c">StorageV2</td><td class="t2c">GRS</td><td class="mn t1c">12.4 TB</td><td><span class="mn t3c">rg-production-uae-north</span></td><td class="mn t1c">$890</td></tr>
+        <tr><td><span class="mn t1c">stprodbackup001</span></td><td class="t2c">BlobStorage</td><td class="t2c">LRS</td><td class="mn t1c">8.1 TB</td><td><span class="mn t3c">rg-production-uae-north</span></td><td class="mn t1c">$623</td></tr>
+        <tr><td><span class="mn t1c">storage-backup-lrs-001</span></td><td class="t2c">StorageV2</td><td class="t2c">LRS</td><td class="mn t1c">6.3 TB</td><td><span class="mn t3c">rg-shared-services</span></td><td class="mn t1c">$541</td></tr>
+        <tr><td><span class="mn t1c">stanalyticsraw</span></td><td class="t2c">DataLake Gen2</td><td class="t2c">ZRS</td><td class="mn t1c">9.8 TB</td><td><span class="mn t3c">rg-data-analytics</span></td><td class="mn t1c">$740</td></tr>
+        <tr><td><span class="mn t1c">stdevlogs001</span></td><td class="t2c">StorageV2</td><td class="t2c">LRS</td><td class="mn t1c">1.2 TB</td><td><span class="mn t3c">rg-development-uae-north</span></td><td class="mn t1c">$92</td></tr>
+      </tbody></table></div>
+    </div>
+    <div class="g2">
+      <div class="card"><div class="ch"><div><div class="ct">Managed Disks</div></div></div>
+        <div class="tw"><table><thead><tr><th>Name</th><th>SKU</th><th>Size</th><th>Status</th><th>Cost</th></tr></thead><tbody>
+          <tr><td><span class="mn t1c">disk-sql-data-prod</span></td><td class="t2c">Premium SSD</td><td class="t2c">2TB</td><td><div class="sw"><span class="sd active"></span><span class="t2c" style="font-size:12px">Attached</span></div></td><td class="mn t1c">$276</td></tr>
+          <tr><td><span class="mn t1c">disk-os-vm-app-01</span></td><td class="t2c">Standard SSD</td><td class="t2c">128GB</td><td><div class="sw"><span class="sd active"></span><span class="t2c" style="font-size:12px">Attached</span></div></td><td class="mn t1c">$14</td></tr>
+          <tr><td><span class="mn t1c">disk-orphaned-prod-backup</span></td><td class="t2c">Premium SSD</td><td class="t2c">1TB</td><td><div class="sw"><span class="sd unattached"></span><span class="mn" style="font-size:12px;color:var(--red)">Unattached</span></div></td><td class="mn" style="color:var(--amber)">$138</td></tr>
+        </tbody></table></div>
+      </div>
+      <div class="card"><div class="ch"><div><div class="ct">Snapshots</div></div></div>
+        <div class="tw"><table><thead><tr><th>Group</th><th>Count</th><th>Age</th><th>Cost</th><th>Policy</th></tr></thead><tbody>
+          <tr><td class="t1c">db-snapshots-recent</td><td class="t2c">8</td><td class="t2c">&lt;30 days</td><td class="mn t1c">$24.10</td><td><span class="bdg b-green">Active</span></td></tr>
+          <tr><td class="t1c">snapshot-db-2024-01-*</td><td class="t2c">12</td><td class="mn" style="color:var(--red)">90+ days</td><td class="mn" style="color:var(--amber)">$67.20</td><td><span class="bdg b-red">No policy</span></td></tr>
+        </tbody></table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NETWORKING -->
+  <div class="page" id="page-networking">
+    <div class="ph"><div><div class="pt">Networking</div><div class="ps">VNets, gateways, public IPs, and private endpoints</div></div></div>
+    <div class="g3">
+      <div class="kpi" style="--ac:var(--blue)"><div class="kh"><div class="kl">Total Network Cost</div></div><div class="kv">$4,211</div><div class="kf"><span class="kcl">10.3% of total spend</span></div></div>
+      <div class="kpi" style="--ac:var(--green)"><div class="kh"><div class="kl">Virtual Networks</div></div><div class="kv">4</div><div class="kf"><span class="kc neu">Hub-spoke</span><span class="kcl">topology</span></div></div>
+      <div class="kpi" style="--ac:var(--amber)"><div class="kh"><div class="kl">Unused Public IPs</div></div><div class="kv">1</div><div class="kf"><span class="kc up">$26</span><span class="kcl">monthly waste</span></div></div>
+    </div>
+    <div class="card"><div class="ch"><div><div class="ct">Virtual Networks</div><div class="cs">Hub-spoke topology — UAE North</div></div></div>
+      <div class="tw"><table><thead><tr><th>Name</th><th>Type</th><th>Address Space</th><th>Peerings</th><th>Resource Group</th><th>Cost</th></tr></thead><tbody>
+        <tr><td><span class="mn t1c">vnet-hub-prod-uae</span></td><td><span class="bdg b-blue">Hub</span></td><td class="mn t2c">10.0.0.0/16</td><td class="t2c">3 peerings</td><td><span class="mn t3c">rg-shared-services</span></td><td class="mn t1c">$1,467</td></tr>
+        <tr><td><span class="mn t1c">vnet-spoke-prod-uae</span></td><td><span class="bdg b-purple">Spoke</span></td><td class="mn t2c">10.1.0.0/16</td><td class="t2c">1 peering</td><td><span class="mn t3c">rg-production-uae-north</span></td><td class="mn t1c">$840</td></tr>
+        <tr><td><span class="mn t1c">vnet-spoke-staging-uae</span></td><td><span class="bdg b-purple">Spoke</span></td><td class="mn t2c">10.2.0.0/16</td><td class="t2c">1 peering</td><td><span class="mn t3c">rg-staging-uae-north</span></td><td class="mn t1c">$420</td></tr>
+        <tr><td><span class="mn t1c">vnet-spoke-dev-uae</span></td><td><span class="bdg b-purple">Spoke</span></td><td class="mn t2c">10.3.0.0/16</td><td class="t2c">1 peering</td><td><span class="mn t3c">rg-development-uae-north</span></td><td class="mn t1c">$210</td></tr>
+      </tbody></table></div>
+    </div>
+    <div class="g2">
+      <div class="card"><div class="ch"><div><div class="ct">Gateways & Endpoints</div></div></div>
+        <div class="tw"><table><thead><tr><th>Name</th><th>Type</th><th>Status</th><th>Cost</th></tr></thead><tbody>
+          <tr><td><span class="mn t1c">vpngw-hub-prod</span></td><td class="t2c">VPN Gateway (VpnGw2)</td><td><div class="sw"><span class="sd connected"></span><span class="t2c" style="font-size:12px">Connected</span></div></td><td class="mn t1c">$840</td></tr>
+          <tr><td><span class="mn t1c">pe-keyvault-prod</span></td><td class="t2c">Private Endpoint</td><td><div class="sw"><span class="sd active"></span><span class="t2c" style="font-size:12px">Active</span></div></td><td class="mn t1c">$7.20</td></tr>
+          <tr><td><span class="mn t1c">pe-acr-prod</span></td><td class="t2c">Private Endpoint</td><td><div class="sw"><span class="sd active"></span><span class="t2c" style="font-size:12px">Active</span></div></td><td class="mn t1c">$7.20</td></tr>
+          <tr><td><span class="mn t1c">pip-staging-lb-unused</span></td><td class="t2c">Public IP (Static)</td><td><div class="sw"><span class="sd critical"></span><span class="mn" style="font-size:12px;color:var(--red)">Unassociated</span></div></td><td class="mn" style="color:var(--amber)">$26.28</td></tr>
+        </tbody></table></div>
+      </div>
+      <div class="card"><div class="ch"><div><div class="ct">Egress Traffic Cost</div></div></div>
+        <div class="tw"><table><thead><tr><th>Route</th><th>Data Out</th><th>Cost</th></tr></thead><tbody>
+          <tr><td class="t1c">UAE North → Internet</td><td class="mn t1c">18.4 TB</td><td class="mn t1c">$920</td></tr>
+          <tr><td class="t1c">UAE North → Europe</td><td class="mn t1c">4.2 TB</td><td class="mn t1c">$168</td></tr>
+          <tr><td class="t1c">Intra-region</td><td class="mn t1c">94.1 TB</td><td class="mn" style="color:var(--green)">Free</td></tr>
+        </tbody></table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WASTE ALERTS -->
+  <div class="page" id="page-waste-alerts">
+    <div class="ph"><div><div class="pt">Waste Alerts</div><div class="ps">Resources identified for optimization — $1,537 recoverable per month</div></div><span class="bdg b-red">5 active</span></div>
+    <div class="g3">
+      <div class="kpi" style="--ac:var(--red)"><div class="kh"><div class="kl">Total Waste</div></div><div class="kv">$1,537</div><div class="kf"><span class="kcl">monthly recoverable</span></div></div>
+      <div class="kpi" style="--ac:var(--amber)"><div class="kh"><div class="kl">High Severity</div></div><div class="kv">2</div><div class="kf"><span class="kc up">$1,305</span><span class="kcl">waste value</span></div></div>
+      <div class="kpi" style="--ac:var(--blue)"><div class="kh"><div class="kl">Avg Days Detected</div></div><div class="kv">48d</div><div class="kf"><span class="kcl">before resolution</span></div></div>
+    </div>
+    <div class="card"><div class="ch"><div><div class="ct">All Waste Alerts</div><div class="cs">Ranked by severity and cost impact</div></div></div><div id="wlf"></div></div>
+  </div>
+
+  <!-- RECOMMENDATIONS -->
+  <div class="page" id="page-recommendations">
+    <div class="ph"><div><div class="pt">Recommendations</div><div class="ps">Prioritized cost optimization opportunities</div></div></div>
+    <div class="g3">
+      <div class="kpi" style="--ac:var(--green)"><div class="kh"><div class="kl">Total Potential Savings</div></div><div class="kv">$4,820</div><div class="kf"><span class="kcl">if all applied</span></div></div>
+      <div class="kpi" style="--ac:var(--blue)"><div class="kh"><div class="kl">Recommendations</div></div><div class="kv">7</div><div class="kf"><span class="kcl">across 3 categories</span></div></div>
+      <div class="kpi" style="--ac:var(--amber)"><div class="kh"><div class="kl">Quick Wins</div></div><div class="kv">3</div><div class="kf"><span class="kcl">low effort, high impact</span></div></div>
+    </div>
+    <div class="card"><div class="ch"><div><div class="ct">Optimization Recommendations</div><div class="cs">Ranked by potential monthly savings</div></div></div><div id="rl"></div></div>
+  </div>
+
+  <!-- BUDGETS -->
+  <div class="page" id="page-budgets">
+    <div class="ph"><div><div class="pt">Budgets</div><div class="ps">Monthly budget tracking across resource groups</div></div></div>
+    <div class="g3">
+      <div class="kpi" style="--ac:var(--blue)"><div class="kh"><div class="kl">Total Budget</div></div><div class="kv">$45,500</div><div class="kf"><span class="kcl">across 5 resource groups</span></div></div>
+      <div class="kpi" style="--ac:var(--red)"><div class="kh"><div class="kl">Over Budget</div></div><div class="kv">1</div><div class="kf"><span class="kc up">rg-data-analytics</span></div></div>
+      <div class="kpi" style="--ac:var(--green)"><div class="kh"><div class="kl">Remaining</div></div><div class="kv">$4,008</div><div class="kf"><span class="kcl">total subscription</span></div></div>
+    </div>
+    <div class="card" id="bl"></div>
+  </div>
+
+  <!-- MONTHLY REPORT -->
+  <div class="page" id="page-monthly-report">
+    <div class="ph"><div><div class="pt">Monthly Report</div><div class="ps">Executive summary for July 2026</div></div><span class="bdg b-blue">July 2026</span></div>
+    <div class="rgrid">
+      <div class="rstat"><div class="rsval">$40,992</div><div class="rslbl">Total Spend</div></div>
+      <div class="rstat"><div class="rsval">91.1%</div><div class="rslbl">Budget Utilized</div></div>
+      <div class="rstat"><div class="rsval">+8.3%</div><div class="rslbl">Month-over-Month</div></div>
+      <div class="rstat"><div class="rsval">131</div><div class="rslbl">Resources Monitored</div></div>
+      <div class="rstat"><div class="rsval">$1,537</div><div class="rslbl">Waste Identified</div></div>
+      <div class="rstat"><div class="rsval">$43,200</div><div class="rslbl">Month-End Forecast</div></div>
+    </div>
+    <div class="card"><div class="ch"><div><div class="ct">Executive Summary</div></div></div>
+      <div style="line-height:1.8;color:var(--t2);font-size:13.5px">
+        <p style="margin-bottom:12px">Azure spend for <strong style="color:var(--t1)">July 2026</strong> is tracking at <strong style="color:var(--t1)">$40,992</strong> month-to-date, an <strong style="color:var(--red)">8.3% increase</strong> over June ($37,840). At current burn rate, month-end is forecasted at <strong style="color:var(--amber)">$43,200</strong>, within the $45,000 budget.</p>
+        <p style="margin-bottom:12px"><strong style="color:var(--t1)">Key drivers:</strong> Compute is the largest category at 41.2% ($16,840). Azure Databricks usage increased 15.4% due to expanded analytics workloads — rg-data-analytics is now <strong style="color:var(--red)">over its $7,000 budget</strong> at $7,640 (109.1%).</p>
+        <p style="margin-bottom:12px"><strong style="color:var(--amber)">Waste:</strong> $1,537 in recoverable monthly waste across 5 alerts. Most critical: idle GPU node pool ($892/month) and a VM running at 2% CPU ($413/month). Immediate action recommended.</p>
+        <p><strong style="color:var(--green)">Top recommendations:</strong> Reserved instances for top 3 VMs ($1,200/month), rightsize idle VM ($280/month), enforce snapshot retention ($67/month).</p>
+      </div>
+    </div>
+    <div class="card"><div class="ch"><div><div class="ct">Spend by Resource Group</div><div class="cs">July 2026</div></div></div><div style="height:220px;position:relative"><canvas id="rpc"></canvas></div></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="page" id="page-settings">
+    <div class="ph"><div><div class="pt">Settings</div><div class="ps">Dashboard configuration and preferences</div></div></div>
+    <div class="card">
+      <div class="ss"><div class="stitle">Subscription & Scope</div>
+        <div class="srow"><div><div class="slbl">Active Subscription</div><div class="sdesc">Azure subscription to monitor</div></div><div class="sctrl"><select><option>Contoso-Production</option><option>Contoso-Dev</option></select></div></div>
+        <div class="srow"><div><div class="slbl">Default Currency</div><div class="sdesc">Display costs in selected currency</div></div><div class="sctrl"><select><option>USD — US Dollar</option><option>AED — UAE Dirham</option><option>EUR — Euro</option></select></div></div>
+        <div class="srow"><div><div class="slbl">Default Period</div><div class="sdesc">Default time range on load</div></div><div class="sctrl"><select><option>Current Month</option><option>Last 30 Days</option><option>Last Quarter</option></select></div></div>
+      </div>
+      <div class="ss"><div class="stitle">Alerts & Notifications</div>
+        <div class="srow"><div><div class="slbl">Budget Alerts</div><div class="sdesc">Alert when budget exceeds threshold</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="srow"><div><div class="slbl">Waste Detection</div><div class="sdesc">Auto-flag idle and orphaned resources</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="srow"><div><div class="slbl">Alert Threshold</div><div class="sdesc">Trigger at % of budget consumed</div></div><div class="sctrl"><select><option>80%</option><option selected>85%</option><option>90%</option><option>95%</option></select></div></div>
+        <div class="srow"><div><div class="slbl">Email Reports</div><div class="sdesc">Monthly summary via email</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <div class="ss"><div class="stitle">Dashboard</div>
+        <div class="srow"><div><div class="slbl">Auto-Refresh</div><div class="sdesc">Refresh data every 5 minutes</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="srow"><div><div class="slbl">Forecast Model</div><div class="sdesc">Algorithm for cost forecasting</div></div><div class="sctrl"><select><option>Linear Trend</option><option selected>Weighted Average</option><option>ML Prediction</option></select></div></div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /content -->
 </main>
 
 <script>
-const API = 'https://azure-finops-api.vercel.app'; // Will be replaced with actual API
+const CL=['#3B82F6','#10B981','#F59E0B','#8B5CF6','#EF4444','#06B6D4'];
+const f0=n=>'$'+n.toLocaleString('en-US',{maximumFractionDigits:0});
+const f2=n=>'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const RGS=[
+  {n:'rg-production-uae-north',e:'production',s:18421,b:20000,p:92.1,st:'warning'},
+  {n:'rg-data-analytics',e:'production',s:7640,b:7000,p:109.1,st:'critical'},
+  {n:'rg-shared-services',e:'shared',s:4890,b:5500,p:88.9,st:'warning'},
+  {n:'rg-staging-uae-north',e:'staging',s:6830,b:8000,p:85.4,st:'warning'},
+  {n:'rg-development-uae-north',e:'development',s:3211,b:5000,p:64.2,st:'healthy'},
+];
+const TR=[
+  {n:'aks-prod-cluster-01',t:'Azure Kubernetes Service',rg:'rg-production-uae-north',d:187.40,m:5622,tr:8.2},
+  {n:'vm-sql-primary-prod',t:'Virtual Machine (D8s v3)',rg:'rg-production-uae-north',d:98.20,m:2946,tr:1.1},
+  {n:'databricks-analytics-ws',t:'Azure Databricks',rg:'rg-data-analytics',d:84.60,m:2538,tr:15.4},
+  {n:'apim-gateway-prod',t:'API Management (Premium)',rg:'rg-production-uae-north',d:76.30,m:2289,tr:-2.3},
+  {n:'storage-backup-lrs-001',t:'Storage Account (LRS)',rg:'rg-shared-services',d:54.10,m:1623,tr:4.7},
+  {n:'vnet-hub-prod-uae',t:'VPN Gateway (VpnGw2)',rg:'rg-shared-services',d:48.90,m:1467,tr:0},
+  {n:'acr-prod-registry',t:'Container Registry (Premium)',rg:'rg-production-uae-north',d:41.20,m:1236,tr:2.8},
+  {n:'redis-cache-prod-01',t:'Azure Cache for Redis (P2)',rg:'rg-production-uae-north',d:38.70,m:1161,tr:-1.2},
+];
+const WS=[
+  {sev:'high',r:'aks-dev-nodepool-gpu',t:'AKS Node Pool (NC6s v3)',rg:'rg-development-uae-north',i:'GPU node pool idle — no workloads scheduled for 14 days',rec:'Scale to 0 nodes or delete the node pool',w:892.40,d:14},
+  {sev:'high',r:'vm-dev-test-07',t:'Virtual Machine (D4s v3)',rg:'rg-development-uae-north',i:'VM running at <3% CPU for 28 consecutive days',rec:'Downsize to B2s or deallocate when not in use',w:412.80,d:28},
+  {sev:'medium',r:'disk-orphaned-prod-backup',t:'Managed Disk (Premium SSD 1TB)',rg:'rg-production-uae-north',i:'Unattached disk — no VM association found',rec:'Snapshot and delete, or attach to active VM',w:138.24,d:45},
+  {sev:'medium',r:'snapshot-db-2024-01-*',t:'Disk Snapshots (12 items)',rg:'rg-shared-services',i:'Snapshots older than 90 days with no retention policy',rec:'Apply retention policy and delete expired snapshots',w:67.20,d:90},
+  {sev:'low',r:'pip-staging-lb-unused',t:'Public IP Address (Static)',rg:'rg-staging-uae-north',i:'Static IP unassociated with any resource for 60+ days',rec:'Release IP or associate with a resource',w:26.28,d:63},
+];
+const SVC=[
+  {s:'Compute',a:16840,p:41.2},{s:'Kubernetes',a:8920,p:21.8},{s:'Storage',a:5430,p:13.3},
+  {s:'Networking',a:4211,p:10.3},{s:'Databases',a:3180,p:7.8},{s:'AI & Analytics',a:2320,p:5.7},
+];
+const RECS=[
+  {ti:'Purchase Reserved Instances for top 3 VMs',de:'vm-sql-primary-prod, vm-app-primary-prod, and vm-app-secondary-prod have been running continuously for 6+ months. 1-year reserved pricing saves ~40%.',sv:1198,ef:'Low effort',cat:'Reservations'},
+  {ti:'Delete idle GPU node pool',de:'aks-dev-nodepool-gpu has had zero workloads for 14 days at $892/month. Scale to 0 or delete if no longer needed.',sv:892,ef:'Low effort',cat:'Waste'},
+  {ti:'Rightsize vm-dev-test-07 from D4s to B2s',de:'Running at under 3% CPU for 28 days. Downsizing saves 68% while maintaining dev/test performance.',sv:281,ef:'Low effort',cat:'Rightsizing'},
+  {ti:'Enable auto-shutdown for dev/staging VMs',de:'Configure 7 PM auto-shutdown for all VMs in dev and staging resource groups. 14-hour daily saving.',sv:240,ef:'Low effort',cat:'Automation'},
+  {ti:'Migrate analytics to Spot Instances',de:'Databricks workloads in rg-data-analytics are fault-tolerant and can run on Spot VMs at up to 90% discount.',sv:1840,ef:'Medium effort',cat:'Cost Optimization'},
+  {ti:'Apply snapshot retention policy',de:'12 disk snapshots older than 90 days have no policy. 30-day retention eliminates $67/month in storage.',sv:67,ef:'Low effort',cat:'Waste'},
+  {ti:'Release unassociated public IP',de:'pip-staging-lb-unused has been unassociated for 60+ days. Release to stop $26/month charge.',sv:26,ef:'Low effort',cat:'Waste'},
+];
+const BUD=[
+  {n:'rg-production-uae-north',e:'Production',sp:18421,b:20000,p:92.1,st:'warning'},
+  {n:'rg-data-analytics',e:'Production',sp:7640,b:7000,p:109.1,st:'critical'},
+  {n:'rg-shared-services',e:'Shared',sp:4890,b:5500,p:88.9,st:'warning'},
+  {n:'rg-staging-uae-north',e:'Staging',sp:6830,b:8000,p:85.4,st:'warning'},
+  {n:'rg-development-uae-north',e:'Development',sp:3211,b:5000,p:64.2,st:'healthy'},
+];
+const PTI={dashboard:'Cost Overview','cost-analysis':'Cost Analysis',trends:'Trends','resource-groups':'Resource Groups',compute:'Compute',storage:'Storage',networking:'Networking','waste-alerts':'Waste Alerts',recommendations:'Recommendations',budgets:'Budgets','monthly-report':'Monthly Report',settings:'Settings'};
 
-// ─── MOCK DATA (used since API is portfolio demo) ───────────────────────────
-const MOCK = {
-  overview: {
-    period: "July 2026",
-    total_spend: 40992.00,
-    budget: 45000.00,
-    budget_used_pct: 91.1,
-    remaining_budget: 4008.00,
-    last_month_spend: 37840.50,
-    mom_change_pct: 8.3,
-    daily_average: 1863.27,
-    forecast_month_end: 43200.00,
-    waste_identified: 1536.92,
-    waste_alerts_count: 5,
-    resources_monitored: 131,
-    last_updated: new Date().toLocaleString('en-GB', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'}) + ' UTC'
-  },
-  resourceGroups: [
-    {name:"rg-production-uae-north", env:"production", spend:18420.50, budget:20000, budget_used_pct:92.1, status:"warning"},
-    {name:"rg-data-analytics", env:"production", spend:7640.10, budget:7000, budget_used_pct:109.1, status:"critical"},
-    {name:"rg-shared-services", env:"shared", spend:4890.40, budget:5500, budget_used_pct:88.9, status:"warning"},
-    {name:"rg-staging-uae-north", env:"staging", spend:6830.20, budget:8000, budget_used_pct:85.4, status:"warning"},
-    {name:"rg-development-uae-north", env:"development", spend:3210.80, budget:5000, budget_used_pct:64.2, status:"healthy"},
-  ],
-  topResources: [
-    {name:"aks-prod-cluster-01", type:"Azure Kubernetes Service", rg:"rg-production-uae-north", daily:187.40, monthly:5622.00, trend:8.2},
-    {name:"vm-sql-primary-prod", type:"Virtual Machine (D8s v3)", rg:"rg-production-uae-north", daily:98.20, monthly:2946.00, trend:1.1},
-    {name:"databricks-analytics-ws", type:"Azure Databricks", rg:"rg-data-analytics", daily:84.60, monthly:2538.00, trend:15.4},
-    {name:"apim-gateway-prod", type:"API Management (Premium)", rg:"rg-production-uae-north", daily:76.30, monthly:2289.00, trend:-2.3},
-    {name:"storage-backup-lrs-001", type:"Storage Account (LRS)", rg:"rg-shared-services", daily:54.10, monthly:1623.00, trend:4.7},
-    {name:"vnet-hub-prod-uae", type:"VPN Gateway (VpnGw2)", rg:"rg-shared-services", daily:48.90, monthly:1467.00, trend:0.0},
-    {name:"acr-prod-registry", type:"Container Registry (Premium)", rg:"rg-production-uae-north", daily:41.20, monthly:1236.00, trend:2.8},
-    {name:"redis-cache-prod-01", type:"Azure Cache for Redis (P2)", rg:"rg-production-uae-north", daily:38.70, monthly:1161.00, trend:-1.2},
-  ],
-  wasteAlerts: [
-    {id:"W001", severity:"high", resource:"aks-dev-nodepool-gpu", type:"AKS Node Pool (NC6s v3)", rg:"rg-development-uae-north", issue:"GPU node pool idle — no workloads scheduled for 14 days", recommendation:"Scale to 0 nodes or delete node pool", estimated_waste:892.40, days_detected:14},
-    {id:"W002", severity:"high", resource:"vm-dev-test-07", type:"Virtual Machine (D4s v3)", rg:"rg-development-uae-north", issue:"VM running at <3% CPU for 28 consecutive days", recommendation:"Downsize to B2s or deallocate when not in use", estimated_waste:412.80, days_detected:28},
-    {id:"W003", severity:"medium", resource:"disk-orphaned-prod-backup", type:"Managed Disk (Premium SSD 1TB)", rg:"rg-production-uae-north", issue:"Unattached disk — no VM association found", recommendation:"Snapshot and delete or attach to active VM", estimated_waste:138.24, days_detected:45},
-    {id:"W004", severity:"medium", resource:"snapshot-db-2024-01-*", type:"Disk Snapshots (12 items)", rg:"rg-shared-services", issue:"Snapshots older than 90 days with no retention policy", recommendation:"Apply retention policy and delete expired snapshots", estimated_waste:67.20, days_detected:90},
-    {id:"W005", severity:"low", resource:"pip-staging-lb-unused", type:"Public IP Address (Static)", rg:"rg-staging-uae-north", issue:"Static IP unassociated with any resource for 60+ days", recommendation:"Release IP or associate with a resource", estimated_waste:26.28, days_detected:63},
-  ],
-  serviceBreakdown: [
-    {service:"Compute", amount:16840.20, percentage:41.2},
-    {service:"Kubernetes", amount:8920.50, percentage:21.8},
-    {service:"Storage", amount:5430.10, percentage:13.3},
-    {service:"Networking", amount:4210.80, percentage:10.3},
-    {service:"Databases", amount:3180.40, percentage:7.8},
-    {service:"AI & Analytics", amount:2320.00, percentage:5.7},
-  ]
+let CH={};
+const DC=el=>{if(CH[el]){CH[el].destroy();delete CH[el];}};
+const CD={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1A2335',borderColor:'rgba(255,255,255,.08)',borderWidth:1,titleColor:'#8896B0',bodyColor:'#F0F4FF',titleFont:{family:'JetBrains Mono',size:11},bodyFont:{family:'JetBrains Mono',size:12}}},scales:{x:{grid:{display:false},ticks:{color:'#4A5568',font:{family:'JetBrains Mono',size:10},maxRotation:0,maxTicksLimit:10},border:{display:false}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#4A5568',font:{family:'JetBrains Mono',size:10}},border:{display:false}}}};
+
+function gSpend(){
+  const d=[];const t=new Date();const b=1863;
+  for(let i=30;i>0;i--){const dt=new Date(t);dt.setDate(t.getDate()-i);const w=dt.getDay()===0||dt.getDay()===6;d.push({l:dt.toLocaleDateString('en-GB',{day:'numeric',month:'short'}),a:Math.max(b*(w?.65:1)*(1+(30-i)*.003)+(Math.random()-.5)*400,400),f:null});}
+  const avg=d.slice(-7).reduce((s,x)=>s+x.a,0)/7;
+  for(let i=1;i<=7;i++){const dt=new Date(t);dt.setDate(t.getDate()+i);d.push({l:dt.toLocaleDateString('en-GB',{day:'numeric',month:'short'}),a:null,f:avg*(1+i*.005)+(Math.random()-.5)*150});}
+  return d;
+}
+
+function bSC(){DC('sc');const d=gSpend();const ctx=document.getElementById('sc')?.getContext('2d');if(!ctx)return;
+  CH.sc=new Chart(ctx,{type:'bar',data:{labels:d.map(x=>x.l),datasets:[{label:'Actual',data:d.map(x=>x.a),backgroundColor:c=>{const v=c.raw;if(!v)return'transparent';return v>2000?'rgba(239,68,68,.55)':v>1600?'rgba(245,158,11,.45)':'rgba(59,130,246,.45)'},borderColor:c=>{const v=c.raw;if(!v)return'transparent';return v>2000?'#EF4444':v>1600?'#F59E0B':'#3B82F6'},borderWidth:1,borderRadius:3,borderSkipped:false},{label:'Forecast',data:d.map(x=>x.f),backgroundColor:'rgba(139,92,246,.2)',borderColor:'#8B5CF6',borderWidth:1,borderRadius:3,borderSkipped:false}]},options:{...CD,interaction:{mode:'index',intersect:false},plugins:{...CD.plugins,tooltip:{...CD.plugins.tooltip,callbacks:{label:c=>` ${c.dataset.label}: ${c.raw?f2(c.raw):'—'}`}}},scales:{...CD.scales,y:{...CD.scales.y,ticks:{...CD.scales.y.ticks,callback:v=>'$'+(v/1000).toFixed(1)+'k'}}}}});}
+
+function bDC(){DC('dc');const ctx=document.getElementById('dc')?.getContext('2d');if(!ctx)return;
+  CH.dc=new Chart(ctx,{type:'doughnut',data:{labels:SVC.map(s=>s.s),datasets:[{data:SVC.map(s=>s.a),backgroundColor:CL.map(c=>c+'33'),borderColor:CL,borderWidth:2,hoverBorderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{backgroundColor:'#1A2335',borderColor:'rgba(255,255,255,.08)',borderWidth:1,bodyColor:'#F0F4FF',bodyFont:{family:'JetBrains Mono',size:12},callbacks:{label:c=>` ${c.label}: ${f0(c.raw)} (${SVC[c.dataIndex].p}%)`}}}}});
+  document.getElementById('sl2').innerHTML=SVC.map((s,i)=>`<div class="li2"><div class="ll"><div class="ldot2" style="background:${CL[i]}"></div><div class="ln">${s.s}</div></div><div class="lr"><div class="la">${f0(s.a)}</div><div class="lp">${s.p}%</div></div></div>`).join('');}
+
+function bCAC(){
+  DC('cab');const c1=document.getElementById('cab')?.getContext('2d');
+  if(c1)CH.cab=new Chart(c1,{type:'bar',data:{labels:SVC.map(s=>s.s),datasets:[{label:'Cost',data:SVC.map(s=>s.a),backgroundColor:CL.map(c=>c+'55'),borderColor:CL,borderWidth:1,borderRadius:6,borderSkipped:false}]},options:{...CD,scales:{...CD.scales,y:{...CD.scales.y,ticks:{...CD.scales.y.ticks,callback:v=>'$'+(v/1000).toFixed(0)+'k'}}}}});
+  DC('epc');const c2=document.getElementById('epc')?.getContext('2d');
+  if(c2)CH.epc=new Chart(c2,{type:'doughnut',data:{labels:['Production','Staging','Development','Shared'],datasets:[{data:[26061,6830,3211,4890],backgroundColor:['rgba(239,68,68,.4)','rgba(245,158,11,.4)','rgba(59,130,246,.4)','rgba(139,92,246,.4)'],borderColor:['#EF4444','#F59E0B','#3B82F6','#8B5CF6'],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:true,position:'right',labels:{color:'#8896B0',font:{family:'JetBrains Mono',size:11},padding:12}},tooltip:{backgroundColor:'#1A2335',borderColor:'rgba(255,255,255,.08)',borderWidth:1,bodyColor:'#F0F4FF',bodyFont:{family:'JetBrains Mono',size:12}}}}});}
+
+function bTRC(){DC('trc');const ctx=document.getElementById('trc')?.getContext('2d');if(!ctx)return;
+  CH.trc=new Chart(ctx,{type:'line',data:{labels:['Jan','Feb','Mar','Apr','May','Jun','Jul'],datasets:[{label:'Actual',data:[31200,33840,35100,36420,37840,null,null],borderColor:'#3B82F6',backgroundColor:'rgba(59,130,246,.08)',borderWidth:2,pointBackgroundColor:'#3B82F6',pointRadius:4,tension:.3,fill:true},{label:'Forecast',data:[null,null,null,null,null,40992,43200],borderColor:'#8B5CF6',backgroundColor:'rgba(139,92,246,.08)',borderWidth:2,borderDash:[6,3],pointBackgroundColor:'#8B5CF6',pointRadius:4,tension:.3},{label:'Budget',data:[45000,45000,45000,45000,45000,45000,45000],borderColor:'rgba(239,68,68,.5)',backgroundColor:'transparent',borderWidth:1,borderDash:[3,3],pointRadius:0}]},options:{...CD,plugins:{...CD.plugins,legend:{display:true,labels:{color:'#8896B0',font:{family:'JetBrains Mono',size:11},padding:16}}},scales:{...CD.scales,y:{...CD.scales.y,ticks:{...CD.scales.y.ticks,callback:v=>'$'+(v/1000).toFixed(0)+'k'}}}}});}
+
+function bRPC(){DC('rpc');const ctx=document.getElementById('rpc')?.getContext('2d');if(!ctx)return;
+  CH.rpc=new Chart(ctx,{type:'bar',data:{labels:RGS.map(r=>r.n.replace('rg-','').replace('-uae-north','')),datasets:[{label:'Spend',data:RGS.map(r=>r.s),backgroundColor:RGS.map(r=>r.st==='critical'?'rgba(239,68,68,.5)':r.st==='warning'?'rgba(245,158,11,.5)':'rgba(16,185,129,.5)'),borderColor:RGS.map(r=>r.st==='critical'?'#EF4444':r.st==='warning'?'#F59E0B':'#10B981'),borderWidth:1,borderRadius:4},{label:'Budget',data:RGS.map(r=>r.b),backgroundColor:'transparent',borderColor:'rgba(255,255,255,.15)',borderWidth:1,borderRadius:4}]},options:{...CD,plugins:{...CD.plugins,legend:{display:true,labels:{color:'#8896B0',font:{family:'JetBrains Mono',size:11},padding:12}}},scales:{...CD.scales,y:{...CD.scales.y,ticks:{...CD.scales.y.ticks,callback:v=>'$'+(v/1000).toFixed(0)+'k'}}}}});}
+
+function rRGD(){
+  document.getElementById('rgd').innerHTML=RGS.map(r=>`<div class="rgi"><div class="rgt"><div style="display:flex;align-items:center;gap:8px;min-width:0"><span class="rgn">${r.n}</span><span class="et ${r.e}">${r.e}</span></div><div class="rgr"><span class="rga">${f0(r.s)}</span><span class="rgp">${r.p}%</span></div></div><div class="rbb"><div class="rbf ${r.st}" data-w="${Math.min(r.p,100)}" style="width:0"></div></div></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('.rbf').forEach(el=>el.style.width=el.dataset.w+'%'),300);
+}
+function rRT(){
+  document.getElementById('rtt').innerHTML=TR.map(r=>{const tc=r.tr>0?'up':r.tr<0?'dn':'flat';const ti=r.tr>0?'▲':r.tr<0?'▼':'●';const tv=r.tr!==0?Math.abs(r.tr).toFixed(1)+'%':'flat';return`<tr><td><div class="mn t1c">${r.n}</div><div class="sub">${r.t}</div></td><td><span class="mn t3c">${r.rg}</span></td><td><div class="mn t1c">${f2(r.d)}</div></td><td><div class="mn t1c">${f0(r.m)}</div></td><td><span class="tc ${tc}">${ti} ${tv}</span></td></tr>`;}).join('');}
+const wHTML=w=>`<div class="wi"><div class="wsev ${w.sev}"></div><div class="wb"><div class="wr2">${w.r}</div><div class="wt">${w.t} · ${w.rg}</div><div class="wiss">${w.i}</div><div class="wrec">${w.rec}</div></div><div class="wrt"><div class="wa">${f2(w.w)}</div><div class="wd">${w.d}d detected</div><div class="sl ${w.sev}">${w.sev}</div></div></div>`;
+function rWD(){document.getElementById('wld').innerHTML=WS.map(wHTML).join('');}
+function rWF(){document.getElementById('wlf').innerHTML=WS.map(wHTML).join('');}
+function rRecs(){document.getElementById('rl').innerHTML=RECS.map(r=>`<div class="ri"><div class="rt"><div><div class="rtitle">${r.ti}</div><div class="rdesc">${r.de}</div><div class="rmeta"><span class="rsav">Save ${f0(r.sv)}/mo</span><span class="reff">· ${r.ef}</span><span class="bdg b-blue" style="margin-left:4px">${r.cat}</span></div></div><button class="rbtn">Apply</button></div></div>`).join('');}
+function rBud(){
+  const el=document.getElementById('bl');
+  el.innerHTML='<div class="ch"><div><div class="ct">Budget Tracker</div><div class="cs">Actual vs monthly budget</div></div></div>'+BUD.map(b=>{const col=b.st==='critical'?'linear-gradient(90deg,#EF4444,#F87171)':b.st==='warning'?'linear-gradient(90deg,#F59E0B,#FCD34D)':'linear-gradient(90deg,#10B981,#34D399)';return`<div class="bc"><div class="bt"><div><div class="bn">${b.n}</div><span class="et ${b.e.toLowerCase()}" style="margin-top:4px;display:inline-block">${b.e}</span></div><div class="bam"><span class="bsp">${f0(b.sp)}</span><span class="bto"> / ${f0(b.b)}</span></div></div><div class="bbtrack"><div class="bbfill" data-w="${Math.min(b.p,100)}" style="width:0;background:${col}"></div></div><div class="bfoot"><span>${b.p}% used</span><span>${b.st==='critical'?'OVER BUDGET':f0(b.b-b.sp)+' remaining'}</span></div></div>`;}).join('');
+  setTimeout(()=>document.querySelectorAll('.bbfill').forEach(el=>el.style.width=el.dataset.w+'%'),200);
+}
+
+function nav(pid){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+pid)?.classList.add('active');
+  document.querySelector(`[data-page="${pid}"]`)?.classList.add('active');
+  document.getElementById('tbt').textContent=PTI[pid]||pid;
+  if(pid==='cost-analysis')setTimeout(bCAC,50);
+  if(pid==='trends')setTimeout(bTRC,50);
+  if(pid==='monthly-report')setTimeout(bRPC,50);
+  if(pid==='waste-alerts')rWF();
+  if(pid==='recommendations')rRecs();
+  if(pid==='budgets')rBud();
+}
+document.querySelectorAll('.ni').forEach(el=>el.addEventListener('click',()=>nav(el.dataset.page)));
+
+function toggleDD(id){const d=document.getElementById(id);const o=d.classList.contains('open');document.querySelectorAll('.dd').forEach(x=>x.classList.remove('open'));if(!o)d.classList.add('open');}
+document.addEventListener('click',e=>{if(!e.target.closest('.tbb'))document.querySelectorAll('.dd').forEach(d=>d.classList.remove('open'));});
+const PERIOD_DATA={
+  'July 2026':{total:'$40,992',mom:'▲ 8.3%',momC:'up',budget:'91.1%',remaining:'$4,008',forecast:'$43,200',daily:'$1,863/day',waste:'$1,537',wasteC:'5'},
+  'June 2026':{total:'$37,840',mom:'▲ 5.1%',momC:'up',budget:'84.1%',remaining:'$7,160',forecast:'$38,200',daily:'$1,721/day',waste:'$980',wasteC:'3'},
+  'May 2026':{total:'$35,100',mom:'▼ 2.3%',momC:'dn',budget:'78.0%',remaining:'$9,900',forecast:'$35,400',daily:'$1,595/day',waste:'$720',wasteC:'2'},
+  'Q2 2026':{total:'$113,932',mom:'▲ 11.2%',momC:'up',budget:'84.4%',remaining:'$21,068',forecast:'$114,200',daily:'$1,870/day',waste:'$3,240',wasteC:'8'},
+  'YTD 2026':{total:'$228,644',mom:'▲ 12.4%',momC:'up',budget:'84.7%',remaining:'$41,356',forecast:'$245,000',daily:'$1,720/day',waste:'$6,180',wasteC:'14'},
 };
-
-function generateSpendData() {
-  const data = [];
-  const today = new Date();
-  const baseSpend = 1863;
-  for (let i = 30; i > 0; i--) {
-    const d = new Date(today); d.setDate(today.getDate() - i);
-    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-    const factor = isWeekend ? 0.65 : 1.0;
-    const trend = 1 + (30 - i) * 0.003;
-    const noise = (Math.random() - 0.5) * 400;
-    data.push({ date: d.toLocaleDateString('en-GB', {day:'numeric', month:'short'}), amount: Math.max(baseSpend * factor * trend + noise, 400), forecast: null });
-  }
-  const lastAvg = data.slice(-7).reduce((s, d) => s + d.amount, 0) / 7;
-  for (let i = 1; i <= 7; i++) {
-    const d = new Date(today); d.setDate(today.getDate() + i);
-    data.push({ date: d.toLocaleDateString('en-GB', {day:'numeric', month:'short'}), amount: null, forecast: lastAvg * (1 + i * 0.005) + (Math.random() - 0.5) * 150 });
-  }
-  return data;
-}
-
-// ─── FORMAT ─────────────────────────────────────────────────────────────────
-const fmt = (n) => '$' + n.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
-const fmt2 = (n) => '$' + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
-
-// ─── CHARTS ─────────────────────────────────────────────────────────────────
-let spendChart, donutChart;
-
-function buildSpendChart(data) {
-  const ctx = document.getElementById('spendChart').getContext('2d');
-  const labels = data.map(d => d.date);
-  const actuals = data.map(d => d.amount);
-  const forecasts = data.map(d => d.forecast);
-
-  if (spendChart) spendChart.destroy();
-  spendChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Actual Spend',
-          data: actuals,
-          backgroundColor: (ctx) => {
-            const v = ctx.raw;
-            if (!v) return 'transparent';
-            return v > 2000 ? 'rgba(239,68,68,0.6)' : v > 1600 ? 'rgba(245,158,11,0.5)' : 'rgba(59,130,246,0.5)';
-          },
-          borderColor: (ctx) => {
-            const v = ctx.raw;
-            if (!v) return 'transparent';
-            return v > 2000 ? '#EF4444' : v > 1600 ? '#F59E0B' : '#3B82F6';
-          },
-          borderWidth: 1,
-          borderRadius: 3,
-          borderSkipped: false,
-        },
-        {
-          label: 'Forecast',
-          data: forecasts,
-          backgroundColor: 'rgba(139,92,246,0.25)',
-          borderColor: '#8B5CF6',
-          borderWidth: 1,
-          borderRadius: 3,
-          borderSkipped: false,
-          borderDash: [4, 4],
-        }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#1A2335',
-          borderColor: 'rgba(255,255,255,0.08)',
-          borderWidth: 1,
-          titleColor: '#8896B0',
-          bodyColor: '#F0F4FF',
-          titleFont: { family: 'JetBrains Mono', size: 11 },
-          bodyFont: { family: 'JetBrains Mono', size: 13 },
-          callbacks: {
-            label: (ctx) => ` ${ctx.dataset.label}: ${ctx.raw ? fmt2(ctx.raw) : '—'}`
-          }
-        }
-      },
-      scales: {
-        x: {
-          grid: { display: false },
-          ticks: {
-            color: '#4A5568', font: { family: 'JetBrains Mono', size: 10 },
-            maxTicksLimit: 10, maxRotation: 0
-          },
-          border: { display: false }
-        },
-        y: {
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { color: '#4A5568', font: { family: 'JetBrains Mono', size: 10 }, callback: v => '$' + (v/1000).toFixed(1) + 'k' },
-          border: { display: false }
-        }
-      }
-    }
-  });
-}
-
-function buildDonutChart(data) {
-  const COLORS = ['#3B82F6','#10B981','#F59E0B','#8B5CF6','#EF4444','#06B6D4'];
-  const ctx = document.getElementById('donutChart').getContext('2d');
-  if (donutChart) donutChart.destroy();
-  donutChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: data.map(d => d.service),
-      datasets: [{
-        data: data.map(d => d.amount),
-        backgroundColor: COLORS.map(c => c + '33'),
-        borderColor: COLORS,
-        borderWidth: 2,
-        hoverBorderWidth: 3,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      cutout: '68%',
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#1A2335',
-          borderColor: 'rgba(255,255,255,0.08)',
-          borderWidth: 1,
-          bodyColor: '#F0F4FF',
-          bodyFont: { family: 'JetBrains Mono', size: 12 },
-          callbacks: { label: (ctx) => ` ${ctx.label}: ${fmt2(ctx.raw)} (${data[ctx.dataIndex].percentage}%)` }
-        }
-      }
-    }
-  });
-
-  const legend = document.getElementById('serviceLegend');
-  legend.innerHTML = data.map((d, i) => `
-    <div class="legend-item">
-      <div class="legend-left">
-        <div class="legend-dot" style="background:${COLORS[i]}"></div>
-        <div class="legend-name">${d.service}</div>
-      </div>
-      <div class="legend-right">
-        <div class="legend-amount">${fmt(d.amount)}</div>
-        <div class="legend-pct">${d.percentage}%</div>
-      </div>
-    </div>
-  `).join('');
-}
-
-// ─── RENDER FUNCTIONS ────────────────────────────────────────────────────────
-function renderOverview(d) {
-  document.getElementById('kpi-total').textContent = fmt(d.total_spend);
-  document.getElementById('kpi-mom').textContent = (d.mom_change_pct > 0 ? '▲ ' : '▼ ') + Math.abs(d.mom_change_pct) + '%';
-  document.getElementById('kpi-budget-pct').textContent = d.budget_used_pct + '%';
-  document.getElementById('kpi-budget-remaining').textContent = fmt(d.remaining_budget);
-  document.getElementById('kpi-forecast').textContent = fmt(d.forecast_month_end);
-  document.getElementById('kpi-daily').textContent = fmt(d.daily_average) + '/day';
-  document.getElementById('kpi-waste').textContent = fmt(d.waste_identified);
-  document.getElementById('kpi-waste-count').textContent = d.waste_alerts_count;
-  document.getElementById('wasteBadge').textContent = d.waste_alerts_count;
-  document.getElementById('lastUpdated').innerHTML = `<span class="sub-dot"></span> ${d.last_updated}`;
-
-  // Animate budget meter
-  setTimeout(() => {
-    document.getElementById('budgetMeter').style.width = d.budget_used_pct + '%';
-  }, 300);
-}
-
-function renderResourceGroups(data) {
-  const list = document.getElementById('rgList');
-  list.innerHTML = data.map(rg => `
-    <div class="rg-item">
-      <div class="rg-top">
-        <div style="display:flex;align-items:center;gap:8px;min-width:0;">
-          <span class="rg-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${rg.name}</span>
-          <span class="rg-env ${rg.env}">${rg.env}</span>
-        </div>
-        <div class="rg-right">
-          <span class="rg-amount">${fmt(rg.spend)}</span>
-          <span class="rg-pct">${rg.budget_used_pct}%</span>
-        </div>
-      </div>
-      <div class="rg-bar">
-        <div class="rg-bar-fill ${rg.status}" data-width="${Math.min(rg.budget_used_pct, 100)}" style="width:0%"></div>
-      </div>
-    </div>
-  `).join('');
-
-  setTimeout(() => {
-    document.querySelectorAll('.rg-bar-fill').forEach(el => {
-      el.style.width = el.dataset.width + '%';
-    });
-  }, 400);
-}
-
-function renderTopResources(data) {
-  document.getElementById('resourceCount').textContent = data.length + ' resources';
-  document.getElementById('resourceTable').innerHTML = data.map(r => {
-    const trendClass = r.trend > 0 ? 'up' : r.trend < 0 ? 'down' : 'flat';
-    const trendIcon = r.trend > 0 ? '▲' : r.trend < 0 ? '▼' : '●';
-    const trendVal = r.trend !== 0 ? Math.abs(r.trend).toFixed(1) + '%' : 'flat';
-    return `
-      <tr>
-        <td>
-          <div class="resource-name">${r.name}</div>
-          <div class="resource-type">${r.type}</div>
-        </td>
-        <td><div class="rg-tag">${r.rg}</div></td>
-        <td>
-          <div class="amount-cell">${fmt2(r.daily)}</div>
-          <div class="amount-sub">per day</div>
-        </td>
-        <td>
-          <div class="amount-cell">${fmt(r.monthly)}</div>
-          <div class="amount-sub">this month</div>
-        </td>
-        <td><span class="trend-chip ${trendClass}">${trendIcon} ${trendVal}</span></td>
-      </tr>
-    `;
-  }).join('');
-}
-
-function renderWasteAlerts(data, total) {
-  document.getElementById('wasteTotal').textContent = fmt2(total) + ' waste';
-  document.getElementById('wasteList').innerHTML = data.map(w => `
-    <div class="waste-item">
-      <div class="waste-severity ${w.severity}"></div>
-      <div class="waste-body">
-        <div class="waste-resource">${w.resource}</div>
-        <div class="waste-type">${w.type} · ${w.rg}</div>
-        <div class="waste-issue">${w.issue}</div>
-        <div class="waste-rec">${w.recommendation}</div>
-      </div>
-      <div class="waste-right">
-        <div class="waste-amount">${fmt2(w.estimated_waste)}</div>
-        <div class="waste-days">${w.days_detected}d detected</div>
-        <div class="severity-label ${w.severity}">${w.severity}</div>
-      </div>
-    </div>
-  `).join('');
-}
-
-// ─── LOAD ────────────────────────────────────────────────────────────────────
-async function loadData() {
-  const loadingTexts = [
-    'Fetching cost management data...',
-    'Analysing resource spend...',
-    'Running waste detection...',
-    'Building dashboard...'
+const SUB_DATA={
+  'All Subscriptions':{total:'$40,992',resources:'131',rgs:'5'},
+  'Contoso-Production':{total:'$36,840',resources:'101',rgs:'3'},
+  'Contoso-Dev':{total:'$4,152',resources:'30',rgs:'2'},
+};
+function updateKPIs(period,sub){
+  const pd=PERIOD_DATA[period]||PERIOD_DATA['July 2026'];
+  const sd=SUB_DATA[sub]||SUB_DATA['All Subscriptions'];
+  // Animate KPI update
+  const kpis=[
+    {el:'kpi-total',val:sd.total||pd.total},
   ];
-
-  let li = 0;
-  const textEl = document.getElementById('loadingText');
-  const barEl = document.getElementById('loadingBar');
-
-  barEl.style.width = '0%';
-  const interval = setInterval(() => {
-    li = (li + 1) % loadingTexts.length;
-    if (textEl) textEl.textContent = loadingTexts[li];
-  }, 600);
-
-  setTimeout(() => { barEl.style.width = '100%'; }, 100);
-
-  await new Promise(r => setTimeout(r, 2200));
-  clearInterval(interval);
-
-  // Render all sections with mock data
-  renderOverview(MOCK.overview);
-  renderResourceGroups(MOCK.resourceGroups);
-  renderTopResources(MOCK.topResources);
-  renderWasteAlerts(MOCK.wasteAlerts, MOCK.overview.waste_identified);
-
-  const spendData = generateSpendData();
-  buildSpendChart(spendData);
-  buildDonutChart(MOCK.serviceBreakdown);
-
-  document.getElementById('loadingOverlay').classList.add('hidden');
+  // Flash effect
+  document.querySelectorAll('.kv').forEach(el=>{
+    el.style.transition='opacity .15s';
+    el.style.opacity='0.3';
+    setTimeout(()=>{el.style.opacity='1';},200);
+  });
+  setTimeout(()=>{
+    document.querySelector('#page-dashboard .kv').textContent=sd.total||pd.total;
+    const kvs=document.querySelectorAll('#page-dashboard .kv');
+    if(kvs[0])kvs[0].textContent=sd.total||pd.total;
+    if(kvs[1])kvs[1].textContent=pd.budget;
+    if(kvs[2])kvs[2].textContent=pd.forecast;
+    if(kvs[3])kvs[3].textContent=pd.waste;
+    const kcs=document.querySelectorAll('#page-dashboard .kc');
+    if(kcs[0]){kcs[0].textContent=pd.mom;kcs[0].className='kc '+pd.momC;}
+    const kcls=document.querySelectorAll('#page-dashboard .kcl');
+    if(kcls[1])kcls[1].textContent='remaining of $45,000';
+    if(kcls[2])kcls[2].textContent=pd.daily;
+    // Rebuild spend chart with slight variation
+    bSC();
+  },200);
 }
+let curPeriod='July 2026';let curSub='All Subscriptions';
+function setP(v){
+  document.getElementById('pLabel').textContent=v;
+  document.querySelectorAll('#pDD .ddi').forEach(el=>el.classList.toggle('sel',el.textContent===v));
+  document.getElementById('pDD').classList.remove('open');
+  curPeriod=v;
+  updateKPIs(curPeriod,curSub);
+}
+function setS(v){
+  document.getElementById('sLabel').textContent=v;
+  document.querySelectorAll('#sDD .ddi').forEach(el=>el.classList.toggle('sel',el.textContent===v));
+  document.getElementById('sDD').classList.remove('open');
+  curSub=v;
+  updateKPIs(curPeriod,curSub);
+}
+function doRefresh(){document.getElementById('lu').textContent='Refreshing...';setTimeout(()=>{document.getElementById('lu').textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+' UTC';},800);}
 
-loadData();
+async function init(){
+  const bar=document.getElementById('lb');const txt=document.getElementById('lt');
+  bar.style.width='0%';bar.style.transition='width 1.8s ease';
+  const msgs=['Connecting to Azure Cost Management...','Fetching resource data...','Running waste detection...','Building dashboard...'];
+  let i=0;const iv=setInterval(()=>{txt.textContent=msgs[Math.min(++i,msgs.length-1)];},500);
+  setTimeout(()=>bar.style.width='100%',50);
+  await new Promise(r=>setTimeout(r,2000));
+  clearInterval(iv);
+  rRGD();rRT();rWD();bSC();bDC();
+  setTimeout(()=>document.getElementById('bm').style.width='91.1%',400);
+  document.getElementById('lu').textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+' UTC';
+  document.getElementById('lo').classList.add('hidden');
+}
+init();
 </script>
 </body>
 </html>

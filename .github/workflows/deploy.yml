@@ -12,18 +12,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: Install dependencies
         run: |
           cd backend
           pip install -r requirements.txt
           pip install httpx pytest
-
       - name: Run API health check
         run: |
           cd backend
@@ -32,16 +29,30 @@ jobs:
           curl -f http://localhost:8000/ || exit 1
           curl -f http://localhost:8000/api/overview || exit 1
           curl -f http://localhost:8000/api/waste-alerts || exit 1
-          echo "✅ All API endpoints healthy"
+          echo "All API endpoints healthy"
+
+  trivy-security-scan:
+    name: Trivy Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t azure-finops-dashboard:${{ github.sha }} .
+      - name: Run Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: azure-finops-dashboard:${{ github.sha }}
+          format: table
+          exit-code: 0
+          severity: CRITICAL,HIGH
 
   deploy-backend:
     name: Deploy API to Vercel
-    needs: test-backend
+    needs: [test-backend, trivy-security-scan]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
-
       - name: Deploy Backend
         uses: amondnet/vercel-action@v25
         with:
@@ -58,7 +69,6 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
-
       - name: Deploy Frontend
         uses: amondnet/vercel-action@v25
         with:

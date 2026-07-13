@@ -11,7 +11,7 @@ jobs:
     name: Test Backend
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -35,7 +35,7 @@ jobs:
     name: Trivy Security Scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build Docker image
         run: docker build -t azure-finops-dashboard:${{ github.sha }} .
       - name: Run Trivy vulnerability scan
@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Deploy Backend
         uses: amondnet/vercel-action@v25
         with:
@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Deploy Frontend
         uses: amondnet/vercel-action@v25
         with:
